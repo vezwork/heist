@@ -66,11 +66,9 @@ function loop() {
 
     //vHistory.push([t * 10, -v * 5]);
   } else if (t >= 1) {
-    const rt = t - 1;
     ctx.fillStyle = "red";
     ctx.fillRect(...p, 10, 10);
 
-    const initV = rotate([0, 1], (-1 * Math.PI) / 2);
     ctx.fillText(
       `scale(rotate([0,1], ${(Math.PI / 2).toFixed(2)}) ${t.toFixed(2)})`,
       ...add(p, TEXT_OFFSET)

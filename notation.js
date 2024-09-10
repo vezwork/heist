@@ -31,8 +31,21 @@ class Handle {
     this.p[1] = y;
   }
 
+  get x() {
+    return this.p[0];
+  }
+  set x(n) {
+    this.p[0] = n;
+  }
+  get y() {
+    return this.p[1];
+  }
+  set y(n) {
+    this.p[1] = n;
+  }
+
   distanceTo(p) {
-    return Math.hypot(this.p[0] - p[0], this.p[1] - p[1]);
+    return Math.hypot(this.x - p[0], this.y - p[1]);
   }
 }
 
@@ -74,10 +87,7 @@ class ScaleOp extends Op {
 
     drawLine([this.start.p, this.end.p]);
 
-    this.length = Math.hypot(
-      this.start.p[0] - this.end.p[0],
-      this.start.p[1] - this.end.p[1],
-    );
+    this.length = length(this.start, this.end);
 
     const scaleFactor = this.length * 0.2;
 
@@ -85,7 +95,7 @@ class ScaleOp extends Op {
     const left = add(this.end.p, mul(scaleFactor, rotateQuarterXY(normalised)));
     const right = sub(
       this.end.p,
-      mul(scaleFactor, rotateQuarterXY(normalised)),
+      mul(scaleFactor, rotateQuarterXY(normalised))
     );
 
     drawLine([this.start.p, left]);
@@ -97,7 +107,27 @@ class ScaleOp extends Op {
   }
 }
 
-class RotateOp extends Op {}
+class Value {
+  op = null;
+  time = null;
+  point = null;
+  constructor(op, time, point = null) {
+    this.op = op;
+    this.time = time;
+    this.point = point;
+  }
+
+  go(t = 0.01) {
+    const newTime = this.time + t;
+    if (newTime > 1) {
+      // get next op
+    } else if (newTime < 0) {
+      // get prev op
+    } else {
+      this.point = lerp();
+    }
+  }
+}
 
 let co = new CreateOp(new Handle(200, 200), new Handle(200, 100));
 let so = new ScaleOp(co.end, new Handle(300, 100));
