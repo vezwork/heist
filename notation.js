@@ -1,4 +1,12 @@
-import { add, lerp, normalize, rotateQuarterXY, sub, mul } from "./vec.js";
+import {
+  add,
+  lerp,
+  normalize,
+  rotateQuarterXY,
+  sub,
+  mul,
+  distance,
+} from "./vec.js";
 
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
@@ -87,7 +95,7 @@ class ScaleOp extends Op {
 
     drawLine([this.start.p, this.end.p]);
 
-    this.length = length(this.start, this.end);
+    this.length = distance(this.start.p, this.end.p);
 
     const scaleFactor = this.length * 0.2;
 
