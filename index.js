@@ -1,4 +1,4 @@
-import { add, lerp } from "./vec.js";
+import { add, lerp, rotate, mul } from "./vec.js";
 
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
@@ -49,10 +49,10 @@ function loop() {
   ctx.clearRect(0, 0, c.width, c.height);
   drawLine(l1);
   ctx.fillStyle = "black";
-  ctx.fillText("*2", ...lerp(l1)(0.5));
+  ctx.fillText("rotateQuarter", ...lerp(l1)(0.5));
   drawLine(l2);
   ctx.fillStyle = "black";
-  ctx.fillText("sqrt", ...lerp(l2)(0.5));
+  ctx.fillText("scaleDouble", ...lerp(l2)(0.5));
 
   const p = t < 1 ? lerp(l1)(t) : lerp(l2)(t - 1);
 
@@ -60,27 +60,29 @@ function loop() {
     ctx.fillStyle = "red";
     ctx.fillRect(...p, 10, 10);
 
-    const initV = 3;
-    const v = initV * (1 + t);
-    ctx.fillText(v.toFixed(2), ...add(p, TEXT_OFFSET));
+    const amt = (t * Math.PI) / 2;
 
-    vHistory.push([t * 10, v * 5]);
+    ctx.fillText(`rotate([0,1], ${amt.toFixed(2)})`, ...add(p, TEXT_OFFSET));
+
+    //vHistory.push([t * 10, -v * 5]);
   } else if (t >= 1) {
     const rt = t - 1;
     ctx.fillStyle = "red";
     ctx.fillRect(...p, 10, 10);
 
-    const initV = 3 * 2;
-    const v = initV ** (1 / (1 + rt));
-    ctx.fillText(v.toFixed(2), ...add(p, TEXT_OFFSET));
+    const initV = rotate([0, 1], (-1 * Math.PI) / 2);
+    ctx.fillText(
+      `scale(rotate([0,1], ${(Math.PI / 2).toFixed(2)}) ${t.toFixed(2)})`,
+      ...add(p, TEXT_OFFSET)
+    );
 
-    vHistory.push([t * 10, v * 5]);
+    //vHistory.push([t * 10, -v * 5]);
   }
 
   ctx.fillStyle = "red";
-  for (const vhp of vHistory) {
-    ctx.fillRect(...add([70, -vHistory[0][1]], add(p, vhp)), 1, 1);
-  }
+  // for (const vhp of vHistory) {
+  //   ctx.fillRect(...add([70, 12 - vHistory[0][1]], add(p, vhp)), 1, 1);
+  // }
 
   //aside: drawing
   drawLine(line);
