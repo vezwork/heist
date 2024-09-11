@@ -152,7 +152,7 @@ class Handle {
 
   static getNear(pos, ignore = null) {
     for (const h of Handle.all) {
-      if (h != ignore && h.distanceTo(pos) < 30) {
+      if (h != ignore && h.distanceTo(pos) < 5) {
         return h;
       }
     }
