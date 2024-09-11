@@ -83,17 +83,16 @@ export const expandMacros = (node) => {
 
   if (op === "ROTATE") {
     const [angle, innerNode] = args;
+    const innerExpanded = expandMacros(innerNode);
     return {
-      ...expandMacros(innerNode),
-      args: innerNode.args.map((arg, index) =>
-        index === 0
-          ? { op: "*", args: [`${rotMatrix(angle)}`, expandMacros(arg)] }
-          : expandMacros(arg)
+      op: innerExpanded.op,
+      args: innerExpanded.args.map((arg, index) =>
+        index === 0 ? { op: "*", args: [`${rotMatrix(angle)}`, arg] } : arg
       ),
     };
   }
 
-  if (op === "CREATE") {
+  if (op === "NOOP") {
     return expandMacros(args[1]);
   }
 

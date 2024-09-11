@@ -26,39 +26,10 @@ const BOX_ATOM = new ParticleAST(
   "boxAtom",
   "center",
   "vec2(0.9, 0.6)",
-  "vec4(0.5, 0.3, 0.1, 0.2)",
+  "vec4(0.5, 0.3, 0.1, 0.2)"
 );
 
-let sample_scene = {
-  op: "unite",
-  args: [
-    {
-      op: "CREATE",
-      args: [
-        1,
-        {
-          op: "SCALE",
-          args: ["0.8", BOX_ATOM],
-        },
-      ],
-    },
-
-    {
-      op: "ROTATE",
-      args: [
-        "20.0",
-        {
-          op: "plainBox",
-          args: ["center", "vec2(0.9, 0.1)"],
-        },
-      ],
-    },
-  ],
-};
-
-// curScene.remove();
-let curScene = render(sample_scene);
-document.body.append(curScene);
+let curScene = null;
 
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
@@ -101,7 +72,7 @@ function drawArc(a) {
     a.radius,
     a.startAngle,
     a.endAngle,
-    a.clockwise,
+    a.clockwise
   );
   ctx.stroke();
 }
@@ -197,8 +168,8 @@ class Op {
 }
 
 class CreateOp extends Op {
-  name = "CREATE";
-  range = [0, 1];
+  name = "NOOP";
+  range = [0, 0];
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
@@ -233,7 +204,7 @@ class ScaleOp extends Op {
     const left = add(this.end.p, mul(scaleFactor, rotateQuarterXY(normalised)));
     const right = sub(
       this.end.p,
-      mul(scaleFactor, rotateQuarterXY(normalised)),
+      mul(scaleFactor, rotateQuarterXY(normalised))
     );
 
     drawLine([this.start.p, left]);
@@ -247,6 +218,8 @@ class ScaleOp extends Op {
 
 const lerpNum = (start, end, t) => (1 - t) * start + t * end;
 class RotateOp extends Op {
+  name = "ROTATE";
+  range = [0, 1];
   constructor(start, end, center) {
     super(start, end);
     this.center = center;
@@ -265,6 +238,8 @@ class RotateOp extends Op {
 }
 
 class NoOp extends Op {
+  name = "NOOP";
+  range = [0, 0];
   draw() {
     drawLine([this.start.p, this.end.p]);
 
@@ -288,8 +263,6 @@ class UnionOp extends Op {
 
     drawLine([this.start.p, this.end.p]);
 
-    console.log(mid);
-
     ctx.fillStyle = "black";
     drawCircle(this.end.p, 5);
     ctx.fill();
@@ -308,7 +281,7 @@ class Particle {
     this.value = new ParticleAST(
       this.op.name,
       lerpNum(...this.op.range, this.time),
-      BOX_ATOM,
+      BOX_ATOM
     );
     this.p = p;
   }
@@ -334,7 +307,7 @@ class Particle {
       this.value = new ParticleAST(
         this.op.name,
         lerpNum(...this.op.range, this.time),
-        this.value,
+        this.value
       );
     } else {
       this.time = newTime;
@@ -346,11 +319,14 @@ class Particle {
 
   draw() {
     drawCircle(this.p, 10);
-    drawText(this.value, add(this.p, [0, 20]));
+    console.log(this.value);
+    // drawText(this.value, add(this.p, [0, 20]));
 
-    curScene.remove();
+    //curScene.remove();
     curScene = render(this.value);
-    document.body.append(curScene);
+    //document.body.append(curScene);
+
+    ctx.drawImage(curScene, ...add(this.p, [0, 20]), 150, 50);
   }
 }
 
