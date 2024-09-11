@@ -6,6 +6,8 @@ import {
   sub,
   mul,
   distance,
+  rotateAround,
+  rotate,
 } from "./vec.js";
 import { render, examples,expandMacros } from "./render.js";
 
@@ -167,6 +169,7 @@ class Handle {
 
 class Op {
   static all = [];
+  particlePos = (t) => lerp([this.start.p, this.end.p])(t);
   constructor(start, end) {
     this.start = start;
     this.end = end;
@@ -235,9 +238,31 @@ class ScaleOp extends Op {
 }
 
 const lerpNum = (start, end, t) => (1 - t) * start + t * end;
+const mod = (a, n, nL = 0) =>
+  ((((a - nL) % (n - nL)) + (n - nL)) % (n - nL)) + nL;
+
 class RotateOp extends Op {
   name = "ROTATE";
   range = [0, 1];
+  particlePos = (t) => {
+    const { center, radius, clockwise, startAngle, endAngle } = this.arc;
+
+    let angle = 0;
+    if (clockwise) {
+      if (startAngle > endAngle) {
+        angle = lerpNum(startAngle, endAngle, t);
+      } else {
+        angle = lerpNum(startAngle, endAngle - Math.PI * 2, t);
+      }
+    } else {
+      if (startAngle < endAngle) {
+        angle = lerpNum(startAngle, endAngle, t);
+      } else {
+        angle = lerpNum(startAngle, endAngle + Math.PI * 2, t);
+      }
+    }
+    return add(center, rotate([radius, 0], angle));
+  };
   constructor(start, end, center) {
     super(start, end);
     this.center = center;
@@ -268,6 +293,8 @@ class NoOp extends Op {
 }
 
 class UnionOp extends Op {
+  name = "NOOP";
+  range = [0, 0];
   constructor(start, end, insert) {
     super(start, end);
     this.insert = insert;
@@ -312,7 +339,7 @@ class Particle {
       const nextOp = this.op.getNextOp();
       if (!nextOp) {
         this.time = 1;
-        this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
+        this.p = this.op.particlePos(this.time);
         this.value.args[0] = this.op.range[1];
         return false;
       }
@@ -320,7 +347,7 @@ class Particle {
 
       this.op = nextOp;
       this.time = newTime - 1;
-      this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
+      this.p = this.op.particlePos(this.time);
 
       this.value = new ParticleAST(
         this.op.name,
@@ -329,7 +356,7 @@ class Particle {
       );
     } else {
       this.time = newTime;
-      this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
+      this.p = this.op.particlePos(this.time);
 
       this.value.args[0] = lerpNum(...this.op.range, this.time);
     }
@@ -344,7 +371,7 @@ class Particle {
     curScene = render(this.value);
     //document.body.append(curScene);
 
-    ctx.drawImage(curScene, ...add(this.p, [0, 20]), 150, 50);
+    ctx.drawImage(curScene, ...add(this.p, [20, -15]), 80, 30);
   }
 }
 
