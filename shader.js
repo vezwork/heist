@@ -31,7 +31,7 @@ export function shader({
     const canvas = document.createElement(`canvas`);
     canvas.width = width * devicePixelRatio;
     canvas.height = height * devicePixelRatio;
-    const gl = canvas.getContext("webgl2", { preserveDrawingBuffer });
+    const gl = canvas.getContext("webgl2", { preserveDrawingBuffer, alpha: true });
     canvas.style = `max-width: 100%; width: ${width}px; height: auto;`;
 
     const fragmentShader = createShader(
@@ -94,6 +94,15 @@ void main() {
     async function render() {
       if (visibility !== undefined) await visibility();
       frame = undefined;
+    
+      // (2) Set and use clear color
+      gl.clearColor(0.0, 0.0, 0.0, 0.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    
+      // (3) Enable blending
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 

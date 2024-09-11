@@ -164,23 +164,39 @@ const _scene_test = `
     rotatedBox(center, vec2(1.1, 0.4), vec4(0.1, 0.1, 0.1, 0.1), 20.0))
   `;
 
-export const render = (scene) => shader({ height: 200, iMouse: true })`
-${binops}
-${atoms}
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-  // coords  
-  vec2 center = (2.0*fragCoord - iResolution.xy)/iResolution.y;
-  // scene
-  float d = ${toGLSL(expandMacros(scene))};
-  // colors
-  vec3 background = vec3(0.0, 0.0, 0.0);
-  vec3 interior = vec3(0.6, 0.6, 0.6);
-  // render
-  vec3 color = (d > 0.0) ? background : interior;
-  color = mix(color, vec3(1.0), 1.0 - smoothstep(0.01, 0.02, abs(d))); // border effect
-  fragColor = vec4(color, 1.0); // output
-}
-`;
+  const background_color = `vec4(0.5, 0.5, 0.5, 0.0)`;
+  const interior_color = `vec4(0.5, 0.5, 0.5, 1.0)`;
+  const border_color = `vec4(0.0, 0.0, 0.0, 0.0)`;
+  
+  export const render = (scene) => shader({ height: 200, iMouse: true })`
+  ${binops}
+  ${atoms}
+  void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    // coords  
+    vec2 center = (2.0*fragCoord - iResolution.xy)/iResolution.y;
+    // scene
+    float d = ${toGLSL(expandMacros(scene))};
+    // colors
+    vec4 background = ${background_color};
+    vec4 interior = ${interior_color};
+    vec4 border = ${border_color};
+    // render
+    float borderWidth = 0.01;
+    float aaWidth = 2.0 / iResolution.y; // Anti-aliasing width based on pixel size
+    
+    // Smooth border transition
+    float borderMix = smoothstep(-borderWidth - aaWidth, -borderWidth + aaWidth, d);
+    
+    // Smooth edge transition
+    float edgeMix = smoothstep(-aaWidth, aaWidth, d);
+    
+    // Combine colors
+    vec4 color = mix(interior, border, borderMix);
+    color = mix(color, background, edgeMix);
+    
+    fragColor = color; // output
+  }
+  `;
 
 // // Test the function
 // console.log("YOOOOO:")
