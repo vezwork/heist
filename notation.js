@@ -78,6 +78,7 @@ class Op {
 }
 
 class CreateOp extends Op {
+  name = "create";
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
@@ -94,6 +95,7 @@ class CreateOp extends Op {
 }
 
 class ScaleOp extends Op {
+  name = "scale";
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
@@ -120,15 +122,27 @@ class ScaleOp extends Op {
   }
 }
 
+class ValueOp {
+  op = "noop";
+  args = [];
+  constructor(op = "noop", ...args) {
+    this.op = op;
+    this.args = args;
+  }
+  toString() {
+    return `${this.op}(${this.args.join(",")})`;
+  }
+}
 class Value {
   op = null;
   time = null;
   p = null;
 
-  value = 0;
+  value = new ValueOp();
   constructor(op, time, p = null) {
     this.op = op;
     this.time = time;
+    this.value = new ValueOp(this.op.name, "INIT", time);
     this.p = p;
   }
 
@@ -141,17 +155,19 @@ class Value {
       this.op = nextOp;
       this.time = newTime - 1;
       this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
-    } else if (newTime < 0) {
-      // go to prev op
-      const prevOp = this.op.getPrevOp();
-      if (!prevOp) return false;
-      this.op = prevOp;
-      this.time = 1 + newTime;
-      this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
+
+      this.value.args[1] = 1;
+      this.value = new ValueOp(this.op.name, this.value, this.time);
     } else {
       this.time = newTime;
       this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
+
+      this.value.args[1] = this.time;
     }
+  }
+
+  draw() {
+    drawCircle(this.p, 10);
   }
 }
 
@@ -188,8 +204,8 @@ function tick() {
   ctx.clearRect(0, 0, c.width, c.height);
   Op.all.forEach((op) => op.draw());
   myFirstValue.go();
-  console.log("myFirstValue", myFirstValue.p);
-  drawCircle(myFirstValue.p, 10);
+  myFirstValue.draw();
+  console.log("myFirstValue.value: " + myFirstValue.value);
   requestAnimationFrame(tick);
 }
 
