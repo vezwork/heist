@@ -14,7 +14,7 @@ export function shader({
     Object.entries(uniforms).map(([name, value]) => {
       let [_, type, dims] = value.match(/([^[]+)((?:\[[\s0-9]+\])*)*/);
       return [name, { type, dims }];
-    })
+    }),
   );
   for (const { type } of uniforms.values())
     if (type !== "float") throw new Error(`unknown type: ${type}`);
@@ -42,12 +42,12 @@ precision highp float;
 
 ${Array.from(
   uniforms,
-  ([name, { type, dims }]) => `uniform ${type} ${name}${dims || ""};`
+  ([name, { type, dims }]) => `uniform ${type} ${name}${dims || ""};`,
 ).join("\n")}
- 
+
 const vec3 iResolution = vec3(
-  ${(width * devicePixelRatio).toFixed(1)}, 
-  ${(height * devicePixelRatio).toFixed(1)}, 
+  ${(width * devicePixelRatio).toFixed(1)},
+  ${(height * devicePixelRatio).toFixed(1)},
   ${devicePixelRatio.toFixed(1)}
 );`,
       ...sources,
@@ -56,7 +56,7 @@ const vec3 iResolution = vec3(
 out vec4 fragColor;
 void main() {
   mainImage(fragColor, gl_FragCoord.xy);
-}`
+}`,
     );
 
     const vertexShader = createShader(
@@ -66,13 +66,13 @@ void main() {
 in vec4 a_position;
 void main() {
   gl_Position = a_position;
-}`
+}`,
     );
 
     const program = createProgram(gl, vertexShader, fragmentShader);
     const positionAttributeLocation = gl.getAttribLocation(
       program,
-      "a_position"
+      "a_position",
     );
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
@@ -83,7 +83,7 @@ void main() {
     gl.bufferData(
       gl.ARRAY_BUFFER,
       new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
-      gl.STATIC_DRAW
+      gl.STATIC_DRAW,
     );
     gl.enableVertexAttribArray(positionAttributeLocation);
     gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);

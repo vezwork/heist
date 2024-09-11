@@ -26,7 +26,7 @@ const BOX_ATOM = new ParticleAST(
   "boxAtom",
   "center",
   "vec2(0.9, 0.6)",
-  "vec4(0.5, 0.3, 0.1, 0.2)"
+  "vec4(0.5, 0.3, 0.1, 0.2)",
 );
 
 let curScene = null;
@@ -72,7 +72,7 @@ function drawArc(a) {
     a.radius,
     a.startAngle,
     a.endAngle,
-    a.clockwise
+    a.clockwise,
   );
   ctx.stroke();
 }
@@ -145,6 +145,24 @@ class Handle {
   distanceTo(p) {
     return Math.hypot(this.x - p[0], this.y - p[1]);
   }
+
+  getNear(pos) {
+    return Handle.getNear(this.p, this);
+  }
+
+  static getNear(pos, ignore = null) {
+    for (const h of Handle.all) {
+      if (h != ignore && h.distanceTo(pos) < 30) {
+        return h;
+      }
+    }
+  }
+
+  static createOrFind(x, y) {
+    let n = Handle.getNear([x, y]);
+    if (n) return n;
+    return new Handle(x, y);
+  }
 }
 
 class Op {
@@ -162,7 +180,7 @@ class Op {
   }
   getNextOp() {
     return Op.all.find((op) => {
-      return op.start === this.end;
+      return op.start.p === this.end.p;
     });
   }
 }
@@ -204,7 +222,7 @@ class ScaleOp extends Op {
     const left = add(this.end.p, mul(scaleFactor, rotateQuarterXY(normalised)));
     const right = sub(
       this.end.p,
-      mul(scaleFactor, rotateQuarterXY(normalised))
+      mul(scaleFactor, rotateQuarterXY(normalised)),
     );
 
     drawLine([this.start.p, left]);
@@ -281,7 +299,7 @@ class Particle {
     this.value = new ParticleAST(
       this.op.name,
       lerpNum(...this.op.range, this.time),
-      BOX_ATOM
+      BOX_ATOM,
     );
     this.p = p;
   }
@@ -307,7 +325,7 @@ class Particle {
       this.value = new ParticleAST(
         this.op.name,
         lerpNum(...this.op.range, this.time),
-        this.value
+        this.value,
       );
     } else {
       this.time = newTime;
@@ -319,7 +337,7 @@ class Particle {
 
   draw() {
     drawCircle(this.p, 10);
-    console.log(this.value);
+    //console.log(this.value);
     // drawText(this.value, add(this.p, [0, 20]));
 
     //curScene.remove();
@@ -342,14 +360,49 @@ const myFirstValue = new Particle(oa, 0);
 // console.log(co.getNextOp());
 
 let dragging = null;
+let tool = null;
+
+function applyTool(tool, p) {
+  if (tool == "Create") {
+    return new CreateOp(
+      Handle.createOrFind(p[0], p[1]),
+      new Handle(p[0], p[1]),
+    );
+  }
+  if (tool == "Scale") {
+    return new ScaleOp(Handle.createOrFind(p[0], p[1]), new Handle(p[0], p[1]));
+  }
+  if (tool == "Rotate") {
+    return new RotateOp(
+      Handle.createOrFind(p[0], p[1]),
+      new Handle(p[0] + 50, p[1] + 50),
+      new Handle(p[0], p[1]),
+    );
+  }
+  if (tool == "Union") {
+    return new UnionOp(
+      Handle.createOrFind(p[0], p[1]),
+      new Handle(p[0], p[1]),
+      new Handle(p[0], p[1]),
+    );
+  }
+  if (tool == "Line") {
+    return new NoOp(Handle.createOrFind(p[0], p[1]), new Handle(p[0], p[1]));
+  }
+  return null;
+}
+
 window.addEventListener("mousedown", (e) => {
   // find handles
-  for (const h of Handle.all) {
-    if (h.distanceTo([e.clientX, e.clientY]) < 30) {
-      dragging = h;
-      break;
-    }
+  if (tool != null) {
+    let p = [e.offsetX, e.offsetY];
+    let op = applyTool(tool, p);
+    dragging = op.end;
+    tool = null;
+    return;
   }
+
+  dragging = Handle.getNear([e.clientX, e.clientY]);
 });
 
 window.addEventListener("mousemove", (e) => {
@@ -360,16 +413,45 @@ window.addEventListener("mousemove", (e) => {
 
 window.addEventListener("mouseup", (e) => {
   if (dragging) {
+    let near = dragging.getNear();
+    if (near) {
+      dragging.p = near.p;
+    }
     dragging = null;
+  }
+  tool = null;
+});
+
+const keyBindings = {
+  c: "Create",
+  s: "Scale",
+  r: "Rotate",
+  u: "Union",
+  l: "Line",
+};
+
+window.addEventListener("keydown", (e) => {
+  if (keyBindings[e.key]) {
+    tool = keyBindings[e.key];
+    console.log(tool);
   }
 });
 
 function tick() {
   ctx.clearRect(0, 0, c.width, c.height);
   Op.all.forEach((op) => op.draw());
-  myFirstValue.go();
-  myFirstValue.draw();
+  // myFirstValue.go();
+  // myFirstValue.draw();
   requestAnimationFrame(tick);
+
+  let keys = Object.entries(keyBindings);
+  let tx = 10;
+  let ty = window.innerHeight - keys.length * 20;
+
+  for (const [key, op] of keys) {
+    ctx.fillText(`${key}: ${op}`, tx, 10 + ty);
+    ty += 20;
+  }
 }
 
 tick();
