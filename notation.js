@@ -27,6 +27,11 @@ function drawCircle(p, r) {
   ctx.stroke();
 }
 
+function drawText(text, p, font = "14px serif") {
+  ctx.font = font;
+  ctx.fillText(text, ...p);
+}
+
 class Handle {
   static all = [];
   constructor(x, y) {
@@ -168,6 +173,7 @@ class Value {
 
   draw() {
     drawCircle(this.p, 10);
+    drawText(this.value, add(this.p, [0, 20]));
   }
 }
 
@@ -205,7 +211,6 @@ function tick() {
   Op.all.forEach((op) => op.draw());
   myFirstValue.go();
   myFirstValue.draw();
-  console.log("myFirstValue.value: " + myFirstValue.value);
   requestAnimationFrame(tick);
 }
 
