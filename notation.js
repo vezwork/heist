@@ -136,7 +136,7 @@ class Op {
 
 class CreateOp extends Op {
   name = "CREATE";
-  range = [0, 13];
+  range = [0, 1];
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
@@ -154,7 +154,9 @@ class CreateOp extends Op {
 
 class ScaleOp extends Op {
   name = "SCALE";
-  range = [1, 2];
+  get range() {
+    return [1, this.length * 0.2];
+  }
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
@@ -233,7 +235,6 @@ class Particle {
     drawCircle(this.p, 10);
     drawText(this.value, add(this.p, [0, 20]));
 
-    console.log("try to render scene:", this.value, expandMacros(this.value));
     curScene.remove();
     curScene = render(this.value);
     document.body.append(curScene);
@@ -244,7 +245,6 @@ let co = new CreateOp(new Handle(200, 200), new Handle(200, 100));
 let so = new ScaleOp(co.end, new Handle(300, 100));
 
 const myFirstValue = new Particle(co, 0);
-// console.log(co.getNextOp());
 
 let dragging = null;
 window.addEventListener("mousedown", (e) => {

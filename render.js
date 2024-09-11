@@ -66,14 +66,15 @@ export const expandMacros = (node) => {
 
   if (op === "SCALE") {
     const [scale, innerNode] = args;
+    const innerExpanded = expandMacros(innerNode);
     return {
       op: "*",
       args: [
         scale,
         {
-          op: innerNode.op,
-          args: innerNode.args.map((arg, index) =>
-            index === 0 ? { op: "/", args: [arg, scale] } : expandMacros(arg)
+          op: innerExpanded.op,
+          args: innerExpanded.args.map((arg, index) =>
+            index === 0 ? { op: "/", args: [arg, scale] } : arg
           ),
         },
       ],
