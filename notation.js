@@ -156,7 +156,12 @@ class Value {
     if (newTime > 1) {
       // go to next op
       const nextOp = this.op.getNextOp();
-      if (!nextOp) return false;
+      if (!nextOp) {
+        this.time = 1;
+        this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
+        this.value.args[1] = 1;
+        return false;
+      }
       this.op = nextOp;
       this.time = newTime - 1;
       this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
