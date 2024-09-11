@@ -9,7 +9,7 @@ import {
   rotateAround,
   rotate,
 } from "./vec.js";
-import { render, examples,expandMacros } from "./render.js";
+import { render, examples, expandMacros } from "./render.js";
 
 // value AST data structure
 class ParticleAST {
@@ -28,7 +28,7 @@ const BOX_ATOM = new ParticleAST(
   "boxAtom",
   // "center",
   "vec2(0.9, 0.6)",
-  "vec4(0.5, 0.3, 0.1, 0.2)",
+  "vec4(0.5, 0.3, 0.1, 0.2)"
 );
 
 let curScene = null;
@@ -74,7 +74,7 @@ function drawArc(a) {
     a.radius,
     a.startAngle,
     a.endAngle,
-    a.clockwise,
+    a.clockwise
   );
   ctx.stroke();
 }
@@ -209,7 +209,7 @@ class CreateOp extends Op {
 class ScaleOp extends Op {
   name = "SCALE";
   get range() {
-    return [1, this.length * 0.2];
+    return [1, this.length * 0.02];
   }
   draw() {
     ctx.fillStyle = "white";
@@ -225,7 +225,7 @@ class ScaleOp extends Op {
     const left = add(this.end.p, mul(scaleFactor, rotateQuarterXY(normalised)));
     const right = sub(
       this.end.p,
-      mul(scaleFactor, rotateQuarterXY(normalised)),
+      mul(scaleFactor, rotateQuarterXY(normalised))
     );
 
     drawLine([this.start.p, left]);
@@ -244,25 +244,26 @@ const mod = (a, n, nL = 0) =>
 class RotateOp extends Op {
   name = "ROTATE";
   range = [0, 1];
-  particlePos = (t) => {
-    const { center, radius, clockwise, startAngle, endAngle } = this.arc;
+  _particleAngle = (t) => {
+    const { clockwise, startAngle, endAngle } = this.arc;
 
-    let angle = 0;
     if (clockwise) {
       if (startAngle > endAngle) {
-        angle = lerpNum(startAngle, endAngle, t);
+        return lerpNum(startAngle, endAngle, t);
       } else {
-        angle = lerpNum(startAngle, endAngle - Math.PI * 2, t);
+        return lerpNum(startAngle, endAngle - Math.PI * 2, t);
       }
     } else {
       if (startAngle < endAngle) {
-        angle = lerpNum(startAngle, endAngle, t);
+        return lerpNum(startAngle, endAngle, t);
       } else {
-        angle = lerpNum(startAngle, endAngle + Math.PI * 2, t);
+        return lerpNum(startAngle, endAngle + Math.PI * 2, t);
       }
     }
-    return add(center, rotate([radius, 0], angle));
   };
+  particlePos = (t) =>
+    add(this.arc.center, rotate([this.arc.radius, 0], this._particleAngle(t)));
+
   constructor(start, end, center) {
     super(start, end);
     this.center = center;
@@ -326,7 +327,7 @@ class Particle {
     this.value = new ParticleAST(
       this.op.name,
       lerpNum(...this.op.range, this.time),
-      BOX_ATOM,
+      BOX_ATOM
     );
     this.p = p;
   }
@@ -352,7 +353,7 @@ class Particle {
       this.value = new ParticleAST(
         this.op.name,
         lerpNum(...this.op.range, this.time),
-        this.value,
+        this.value
       );
     } else {
       this.time = newTime;
@@ -371,7 +372,7 @@ class Particle {
     curScene = render(this.value);
     //document.body.append(curScene);
 
-    ctx.drawImage(curScene, ...add(this.p, [20, -15]), 80, 30);
+    ctx.drawImage(curScene, ...add(this.p, [-40, -15]), 80, 30);
   }
 }
 
@@ -393,7 +394,7 @@ function applyTool(tool, p) {
   if (tool == "Create") {
     return new CreateOp(
       Handle.createOrFind(p[0], p[1]),
-      new Handle(p[0], p[1]),
+      new Handle(p[0], p[1])
     );
   }
   if (tool == "Scale") {
@@ -403,14 +404,14 @@ function applyTool(tool, p) {
     return new RotateOp(
       Handle.createOrFind(p[0], p[1]),
       new Handle(p[0] + 50, p[1] + 50),
-      new Handle(p[0], p[1]),
+      new Handle(p[0], p[1])
     );
   }
   if (tool == "Union") {
     return new UnionOp(
       Handle.createOrFind(p[0], p[1]),
       new Handle(p[0], p[1]),
-      new Handle(p[0], p[1]),
+      new Handle(p[0], p[1])
     );
   }
   if (tool == "Line") {
