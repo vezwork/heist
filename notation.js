@@ -27,7 +27,7 @@ function drawCircle(p, r) {
   ctx.stroke();
 }
 
-function drawText(text, p, font = "14px serif") {
+function drawText(text, p, font = "14px monospace") {
   ctx.font = font;
   ctx.fillText(text, ...p);
 }
@@ -127,7 +127,8 @@ class ScaleOp extends Op {
   }
 }
 
-class ValueOp {
+// value AST data structure
+class ParticleAST {
   op = "noop";
   args = [];
   constructor(op = "noop", ...args) {
@@ -138,16 +139,16 @@ class ValueOp {
     return `${this.op}(${this.args.join(",")})`;
   }
 }
-class Value {
-  op = null;
-  time = null;
+class Particle {
+  op = null; // the edge instance its on
+  time = null; // between 0 and 1
   p = null;
 
-  value = new ValueOp();
+  value = new ParticleAST();
   constructor(op, time, p = null) {
     this.op = op;
     this.time = time;
-    this.value = new ValueOp(this.op.name, "INIT", time);
+    this.value = new ParticleAST(this.op.name, "INIT", time);
     this.p = p;
   }
 
@@ -167,7 +168,7 @@ class Value {
       this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
 
       this.value.args[1] = 1;
-      this.value = new ValueOp(this.op.name, this.value, this.time);
+      this.value = new ParticleAST(this.op.name, this.value, this.time);
     } else {
       this.time = newTime;
       this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
@@ -185,7 +186,7 @@ class Value {
 let co = new CreateOp(new Handle(200, 200), new Handle(200, 100));
 let so = new ScaleOp(co.end, new Handle(300, 100));
 
-const myFirstValue = new Value(co, 0);
+const myFirstValue = new Particle(co, 0);
 // console.log(co.getNextOp());
 
 let dragging = null;
