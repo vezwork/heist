@@ -169,6 +169,7 @@ class Handle {
 
 class Op {
   static all = [];
+  particleValue = (t) => lerpNum(0, 0, t);
   particlePos = (t) => lerp([this.start.p, this.end.p])(t);
   constructor(start, end) {
     this.start = start;
@@ -190,7 +191,6 @@ class Op {
 
 class CreateOp extends Op {
   name = "NOOP";
-  range = [0, 0];
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
@@ -208,9 +208,7 @@ class CreateOp extends Op {
 
 class ScaleOp extends Op {
   name = "SCALE";
-  get range() {
-    return [1, this.length * 0.02];
-  }
+  particleValue = (t) => lerpNum(1, this.length * 0.02, t);
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
@@ -243,7 +241,8 @@ const mod = (a, n, nL = 0) =>
 
 class RotateOp extends Op {
   name = "ROTATE";
-  range = [0, 1];
+  particleValue = (t) => this._particleAngle(t);
+
   _particleAngle = (t) => {
     const { clockwise, startAngle, endAngle } = this.arc;
 
@@ -283,7 +282,6 @@ class RotateOp extends Op {
 
 class NoOp extends Op {
   name = "NOOP";
-  range = [0, 0];
   draw() {
     drawLine([this.start.p, this.end.p]);
 
@@ -295,7 +293,6 @@ class NoOp extends Op {
 
 class UnionOp extends Op {
   name = "NOOP";
-  range = [0, 0];
   constructor(start, end, insert) {
     super(start, end);
     this.insert = insert;
@@ -326,7 +323,7 @@ class Particle {
     this.time = time;
     this.value = new ParticleAST(
       this.op.name,
-      lerpNum(...this.op.range, this.time),
+      this.op.particleValue(this.time),
       BOX_ATOM
     );
     this.p = p;
@@ -341,10 +338,10 @@ class Particle {
       if (!nextOp) {
         this.time = 1;
         this.p = this.op.particlePos(this.time);
-        this.value.args[0] = this.op.range[1];
+        this.value.args[0] = this.op.particleValue(1);
         return false;
       }
-      this.value.args[0] = this.op.range[1];
+      this.value.args[0] = this.op.particleValue(1);
 
       this.op = nextOp;
       this.time = newTime - 1;
@@ -352,14 +349,14 @@ class Particle {
 
       this.value = new ParticleAST(
         this.op.name,
-        lerpNum(...this.op.range, this.time),
+        this.op.particleValue(this.time),
         this.value
       );
     } else {
       this.time = newTime;
       this.p = this.op.particlePos(this.time);
 
-      this.value.args[0] = lerpNum(...this.op.range, this.time);
+      this.value.args[0] = this.op.particleValue(this.time);
     }
   }
 

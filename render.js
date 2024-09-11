@@ -69,7 +69,7 @@ export const expandMacros = (node) => {
 
   const { op, args } = node;
 
-  console.log("processing OP: " + op);
+  // console.log("processing OP: " + op);
 
   if (op === "boxAtom") {
     return (x) => `boxAtom(${x}, ${args})`;
@@ -171,11 +171,13 @@ const background_color = `vec4(0.5, 0.5, 0.5, 0.0)`;
 const interior_color = `vec4(0.5, 0.5, 0.5, 1.0)`;
 const border_color = `vec4(0.0, 0.0, 0.0, 0.0)`;
 
+const myShader = shader({ height: 200, iMouse: true });
+
 export const render = (scene) => {
-  console.log("SCENE:");
-  console.log(expandMacros(scene)("center"));
-  console.log("END SCENE");
-  return shader({ height: 200, iMouse: true })`
+  // console.log("SCENE:");
+  // console.log(expandMacros(scene)("center"));
+  // console.log("END SCENE");
+  return myShader`
   ${binops}
   ${atoms}
   void mainImage(out vec4 fragColor, in vec2 fragCoord) {
