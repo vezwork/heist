@@ -58,6 +58,10 @@ const rotMatrix = (angle) =>
 
 export const expandMacros = (node) => {
   // for handling leaves
+  if (typeof node === "number") {
+    return node.toFixed(3);
+  }
+
   if (typeof node !== "object" || node === null) {
     console.log("fallthrough case: " + node);
     return node;
@@ -67,8 +71,8 @@ export const expandMacros = (node) => {
 
   console.log("processing OP: " + op);
 
-  if (op === "BOX") {
-    return (x) => `plainBox(${x}, ${args})`;
+  if (op === "boxAtom") {
+    return (x) => `boxAtom(${x}, ${args})`;
   }
 
   if (op === "NOOP") {
@@ -78,13 +82,15 @@ export const expandMacros = (node) => {
   if (op === "ROTATE") {
     const [angle, innerNode] = args;
     const innerExpanded = expandMacros(innerNode);
-    return (x) => innerExpanded(`(${rotMatrix(angle)} * ${x})`);
+    const anglef = Number(angle).toFixed(3);
+    return (x) => innerExpanded(`(${rotMatrix(anglef)} * ${x})`);
   }
 
   if (op === "SCALE") {
     const [scale, innerNode] = args;
     const innerExpanded = expandMacros(innerNode);
-    return (x) => `(${scale} * ${innerExpanded(`(${x}/${scale})`)})`;
+    const scalef = Number(scale).toFixed(3);
+    return (x) => `(${scalef} * ${innerExpanded(`(${x}/${scalef})`)})`;
   }
 
   if (op === "UNITE") {
@@ -165,14 +171,18 @@ const background_color = `vec4(0.5, 0.5, 0.5, 0.0)`;
 const interior_color = `vec4(0.5, 0.5, 0.5, 1.0)`;
 const border_color = `vec4(0.0, 0.0, 0.0, 0.0)`;
 
-export const render = (scene) => shader({ height: 200, iMouse: true })`
+export const render = (scene) => {
+  console.log("SCENE:");
+  console.log(expandMacros(scene)("center"));
+  console.log("END SCENE");
+  return shader({ height: 200, iMouse: true })`
   ${binops}
   ${atoms}
   void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // coords  
     vec2 center = (2.0*fragCoord - iResolution.xy)/iResolution.y;
     // scene
-    float d = ${expandMacros(scene)};
+    float d = ${expandMacros(scene)("center")};
     // colors
     vec4 background = ${background_color};
     vec4 interior = ${interior_color};
@@ -194,6 +204,7 @@ export const render = (scene) => shader({ height: 200, iMouse: true })`
     fragColor = color; // output
   }
   `;
+};
 
 // // Test the function
 // console.log("YOOOOO:")
@@ -209,7 +220,7 @@ export const render = (scene) => shader({ height: 200, iMouse: true })`
 // Test the function with examples
 export const examples = [
   {
-    op: "BOX",
+    op: "boxAtom",
     args: ["vec2(0.8, 0.9)"],
   },
   {
@@ -217,7 +228,7 @@ export const examples = [
     args: [
       "666",
       {
-        op: "BOX",
+        op: "boxAtom",
         args: ["vec2(0.8, 0.9)"],
       },
     ],
@@ -227,7 +238,7 @@ export const examples = [
     args: [
       "20.0",
       {
-        op: "BOX",
+        op: "boxAtom",
         args: ["vec2(0.8, 0.9)"],
       },
     ],
@@ -237,7 +248,7 @@ export const examples = [
     args: [
       "0.5",
       {
-        op: "BOX",
+        op: "boxAtom",
         args: ["vec2(0.8, 0.9)"],
       },
     ],
@@ -251,7 +262,7 @@ export const examples = [
         args: [
           "20.0",
           {
-            op: "BOX",
+            op: "boxAtom",
             args: ["vec2(0.8, 0.9)"],
           },
         ],
@@ -270,11 +281,11 @@ export const examples = [
             op: "UNITE",
             args: [
               {
-                op: "BOX",
+                op: "boxAtom",
                 args: ["vec2(0.2, 2.0)"],
               },
               {
-                op: "BOX",
+                op: "boxAtom",
                 args: ["vec2(0.8, 0.9)"],
               },
             ],
@@ -291,7 +302,7 @@ export const examples = [
         args: [
           "20.0",
           {
-            op: "BOX",
+            op: "boxAtom",
             args: ["vec2(0.8, 0.9)"],
           },
         ],
@@ -301,7 +312,7 @@ export const examples = [
         args: [
           "0.5",
           {
-            op: "BOX",
+            op: "boxAtom",
             args: ["vec2(0.2, 2.0)"],
           },
         ],

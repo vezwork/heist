@@ -24,7 +24,7 @@ class ParticleAST {
 
 const BOX_ATOM = new ParticleAST(
   "boxAtom",
-  "center",
+  // "center",
   "vec2(0.9, 0.6)",
   "vec4(0.5, 0.3, 0.1, 0.2)",
 );
@@ -443,8 +443,8 @@ window.addEventListener("keydown", (e) => {
 function tick() {
   ctx.clearRect(0, 0, c.width, c.height);
   Op.all.forEach((op) => op.draw());
-  // myFirstValue.go();
-  // myFirstValue.draw();
+  myFirstValue.go();
+  myFirstValue.draw();
   requestAnimationFrame(tick);
 
   let keys = Object.entries(keyBindings);
