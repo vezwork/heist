@@ -1,33 +1,4 @@
-import { add, lerp, rotate, mul } from "./vec.js";
-import { render } from "./render.js"
-
-let sample_scene = {
-  op: "unite",
-  args: [
-    {
-      op: "SCALE",
-      args: [
-        "0.8",
-        {
-          op: "boxAtom",
-          args: ["center", "vec2(0.9, 0.6)", "vec4(0.5, 0.3, 0.1, 0.2)"],
-        },
-      ],
-    },
-    {
-      op: "ROTATE",
-      args: [
-        "20.0",
-        {
-          op: "plainBox",
-          args: ["center", "vec2(0.9, 0.1)"],
-        },
-      ],
-    },
-  ],
-};
-
-document.body.append(render(sample_scene));
+import { add, lerp } from "./vec.js";
 
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");

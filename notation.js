@@ -7,6 +7,58 @@ import {
   mul,
   distance,
 } from "./vec.js";
+import { render, expandMacros } from "./render.js";
+
+// value AST data structure
+class ParticleAST {
+  op = "noop";
+  args = [];
+  constructor(op = "noop", ...args) {
+    this.op = op;
+    this.args = args;
+  }
+  toString() {
+    return `${this.op}(${this.args.join(",")})`;
+  }
+}
+
+const BOX_ATOM = new ParticleAST(
+  "boxAtom",
+  "center",
+  "vec2(0.9, 0.6)",
+  "vec4(0.5, 0.3, 0.1, 0.2)"
+);
+
+let sample_scene = {
+  op: "unite",
+  args: [
+    {
+      op: "CREATE",
+      args: [
+        1,
+        {
+          op: "SCALE",
+          args: ["0.8", BOX_ATOM],
+        },
+      ],
+    },
+
+    {
+      op: "ROTATE",
+      args: [
+        "20.0",
+        {
+          op: "plainBox",
+          args: ["center", "vec2(0.9, 0.1)"],
+        },
+      ],
+    },
+  ],
+};
+
+// curScene.remove();
+let curScene = render(sample_scene);
+document.body.append(curScene);
 
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
@@ -83,7 +135,8 @@ class Op {
 }
 
 class CreateOp extends Op {
-  name = "create";
+  name = "CREATE";
+  range = [0, 13];
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
@@ -100,7 +153,8 @@ class CreateOp extends Op {
 }
 
 class ScaleOp extends Op {
-  name = "scale";
+  name = "SCALE";
+  range = [1, 2];
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
@@ -127,18 +181,7 @@ class ScaleOp extends Op {
   }
 }
 
-// value AST data structure
-class ParticleAST {
-  op = "noop";
-  args = [];
-  constructor(op = "noop", ...args) {
-    this.op = op;
-    this.args = args;
-  }
-  toString() {
-    return `${this.op}(${this.args.join(",")})`;
-  }
-}
+const lerpNum = (start, end, t) => (1 - t) * start + t * end;
 class Particle {
   op = null; // the edge instance its on
   time = null; // between 0 and 1
@@ -148,7 +191,11 @@ class Particle {
   constructor(op, time, p = null) {
     this.op = op;
     this.time = time;
-    this.value = new ParticleAST(this.op.name, "INIT", time);
+    this.value = new ParticleAST(
+      this.op.name,
+      lerpNum(...this.op.range, this.time),
+      BOX_ATOM
+    );
     this.p = p;
   }
 
@@ -160,26 +207,36 @@ class Particle {
       if (!nextOp) {
         this.time = 1;
         this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
-        this.value.args[1] = 1;
+        this.value.args[0] = this.op.range[1];
         return false;
       }
+      this.value.args[0] = this.op.range[1];
+
       this.op = nextOp;
       this.time = newTime - 1;
       this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
 
-      this.value.args[1] = 1;
-      this.value = new ParticleAST(this.op.name, this.value, this.time);
+      this.value = new ParticleAST(
+        this.op.name,
+        lerpNum(...this.op.range, this.time),
+        this.value
+      );
     } else {
       this.time = newTime;
       this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
 
-      this.value.args[1] = this.time;
+      this.value.args[0] = lerpNum(...this.op.range, this.time);
     }
   }
 
   draw() {
     drawCircle(this.p, 10);
     drawText(this.value, add(this.p, [0, 20]));
+
+    console.log("try to render scene:", this.value, expandMacros(this.value));
+    curScene.remove();
+    curScene = render(this.value);
+    document.body.append(curScene);
   }
 }
 

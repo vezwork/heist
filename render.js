@@ -56,13 +56,10 @@ float smoothIntersection( float d1, float d2, float k ) {
 const rotMatrix = (angle) =>
   `inverse(mat2(cos(${angle}), sin(${angle}), -sin(${angle}),cos(${angle})))`;
 
-const expandMacros = (node) => {
+export const expandMacros = (node) => {
+  // for handling leaves
   if (typeof node !== "object" || node === null) {
     return node;
-  }
-
-  if (Array.isArray(node)) {
-    return node.map(expandMacros);
   }
 
   const { op, args } = node;
@@ -74,7 +71,7 @@ const expandMacros = (node) => {
       args: [
         scale,
         {
-          ...expandMacros(innerNode),
+          op: innerNode.op,
           args: innerNode.args.map((arg, index) =>
             index === 0 ? { op: "/", args: [arg, scale] } : expandMacros(arg)
           ),
@@ -95,6 +92,10 @@ const expandMacros = (node) => {
     };
   }
 
+  if (op === "CREATE") {
+    return expandMacros(args[1]);
+  }
+
   // Other operations here
 
   return {
@@ -103,10 +104,13 @@ const expandMacros = (node) => {
   };
 };
 
-
 const toGLSL = (node) => {
   if (typeof node === "string") {
     return node;
+  }
+
+  if (typeof node === "number") {
+    return node.toFixed(2);
   }
 
   if (typeof node !== "object" || node === null) {
@@ -176,7 +180,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   fragColor = vec4(color, 1.0); // output
 }
 `;
-
 
 // // Test the function
 // console.log("YOOOOO:")
