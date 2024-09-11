@@ -26,7 +26,7 @@ const BOX_ATOM = new ParticleAST(
   "boxAtom",
   "center",
   "vec2(0.9, 0.6)",
-  "vec4(0.5, 0.3, 0.1, 0.2)"
+  "vec4(0.5, 0.3, 0.1, 0.2)",
 );
 
 let sample_scene = {
@@ -63,6 +63,14 @@ document.body.append(curScene);
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
 
+// Handle dpr
+const dpr = window.devicePixelRatio;
+c.width = window.innerWidth * dpr;
+c.height = window.innerHeight * dpr;
+c.style.width = window.innerWidth + "px";
+c.style.height = window.innerHeight + "px";
+ctx.scale(dpr, dpr);
+
 function drawLine(l) {
   if (l.length === 0) return;
   ctx.beginPath();
@@ -82,6 +90,60 @@ function drawCircle(p, r) {
 function drawText(text, p, font = "14px monospace") {
   ctx.font = font;
   ctx.fillText(text, ...p);
+}
+
+function drawArc(a) {
+  // Draw the arc
+  ctx.beginPath();
+  ctx.arc(
+    a.center[0],
+    a.center[1],
+    a.radius,
+    a.startAngle,
+    a.endAngle,
+    a.clockwise,
+  );
+  ctx.stroke();
+}
+
+function arcFromThreePoints(p1, p2, p3) {
+  const [x1, y1] = p1;
+  const [x2, y2] = p2;
+  const [x3, y3] = p3;
+
+  // Midpoints
+  const mid1 = [(x1 + x2) / 2, (y1 + y2) / 2];
+  const mid2 = [(x2 + x3) / 2, (y2 + y3) / 2];
+
+  // Slopes of the perpendicular bisectors
+  const slope1 = (x2 - x1) / (y1 - y2);
+  const slope2 = (x3 - x2) / (y2 - y3);
+
+  // Center of the circle
+  const centerX =
+    (mid2[1] - mid1[1] - (slope2 * mid2[0] - slope1 * mid1[0])) /
+    (slope1 - slope2);
+  const centerY = mid1[1] + slope1 * (centerX - mid1[0]);
+
+  // Radius of the circle
+  const radius = Math.sqrt((centerX - x1) ** 2 + (centerY - y1) ** 2);
+
+  const startAngle = Math.atan2(p1[1] - centerY, p1[0] - centerX);
+  const middleAngle = Math.atan2(p2[1] - centerY, p2[0] - centerX);
+  const endAngle = Math.atan2(p3[1] - centerY, p3[0] - centerX);
+
+  const crossProduct =
+    (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
+  const clockwise = crossProduct < 0;
+
+  return {
+    center: [centerX, centerY],
+    radius,
+    startAngle,
+    middleAngle,
+    endAngle,
+    clockwise,
+  };
 }
 
 class Handle {
@@ -171,7 +233,7 @@ class ScaleOp extends Op {
     const left = add(this.end.p, mul(scaleFactor, rotateQuarterXY(normalised)));
     const right = sub(
       this.end.p,
-      mul(scaleFactor, rotateQuarterXY(normalised))
+      mul(scaleFactor, rotateQuarterXY(normalised)),
     );
 
     drawLine([this.start.p, left]);
@@ -184,6 +246,56 @@ class ScaleOp extends Op {
 }
 
 const lerpNum = (start, end, t) => (1 - t) * start + t * end;
+class RotateOp extends Op {
+  constructor(start, end, center) {
+    super(start, end);
+    this.center = center;
+  }
+
+  draw() {
+    this.arc = arcFromThreePoints(this.start.p, this.center.p, this.end.p);
+    drawArc(this.arc);
+
+    ctx.fillStyle = "black";
+
+    drawCircle(this.center.p, 5);
+    drawCircle(this.end.p, 5);
+    ctx.fill();
+  }
+}
+
+class NoOp extends Op {
+  draw() {
+    drawLine([this.start.p, this.end.p]);
+
+    ctx.fillStyle = "black";
+    drawCircle(this.end.p, 5);
+    ctx.fill();
+  }
+}
+
+class UnionOp extends Op {
+  constructor(start, end, insert) {
+    super(start, end);
+    this.insert = insert;
+  }
+
+  draw() {
+    const mid = lerp([this.start.p, this.end.p])(0.5);
+    ctx.fillStyle = "#00000011";
+    drawCircle(mid, 50);
+    ctx.fill();
+
+    drawLine([this.start.p, this.end.p]);
+
+    console.log(mid);
+
+    ctx.fillStyle = "black";
+    drawCircle(this.end.p, 5);
+    ctx.fill();
+  }
+}
+
 class Particle {
   op = null; // the edge instance its on
   time = null; // between 0 and 1
@@ -196,13 +308,14 @@ class Particle {
     this.value = new ParticleAST(
       this.op.name,
       lerpNum(...this.op.range, this.time),
-      BOX_ATOM
+      BOX_ATOM,
     );
     this.p = p;
   }
 
-  go(t = 0.005) {
-    const newTime = this.time + t;
+  go(t = 1) {
+    const len = distance(this.op.start.p, this.op.end.p);
+    const newTime = this.time + t / len;
     if (newTime > 1) {
       // go to next op
       const nextOp = this.op.getNextOp();
@@ -221,7 +334,7 @@ class Particle {
       this.value = new ParticleAST(
         this.op.name,
         lerpNum(...this.op.range, this.time),
-        this.value
+        this.value,
       );
     } else {
       this.time = newTime;
@@ -241,10 +354,16 @@ class Particle {
   }
 }
 
-let co = new CreateOp(new Handle(200, 200), new Handle(200, 100));
-let so = new ScaleOp(co.end, new Handle(300, 100));
+let oa = new CreateOp(new Handle(200, 200), new Handle(200, 100));
+let ob = new ScaleOp(oa.end, new Handle(300, 100));
+let oc = new NoOp(ob.end, new Handle(350, 300));
+let od = new RotateOp(oc.end, new Handle(500, 101), new Handle(500, 200));
+let oe = new CreateOp(new Handle(600, 300), new Handle(600, 120));
 
-const myFirstValue = new Particle(co, 0);
+let of = new UnionOp(od.end, new Handle(700, 100), new Handle(600, 300));
+
+const myFirstValue = new Particle(oa, 0);
+// console.log(co.getNextOp());
 
 let dragging = null;
 window.addEventListener("mousedown", (e) => {
