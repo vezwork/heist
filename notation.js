@@ -7,7 +7,7 @@ import {
   mul,
   distance,
 } from "./vec.js";
-import { render, expandMacros } from "./render.js";
+import { render, examples,expandMacros } from "./render.js";
 
 // value AST data structure
 class ParticleAST {
@@ -436,6 +436,9 @@ window.addEventListener("keydown", (e) => {
     console.log(tool);
   }
 });
+
+//testing for renderer:
+//document.body.append(render(expandMacros(examples[5])("center")));
 
 function tick() {
   ctx.clearRect(0, 0, c.width, c.height);

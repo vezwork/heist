@@ -59,41 +59,39 @@ const rotMatrix = (angle) =>
 export const expandMacros = (node) => {
   // for handling leaves
   if (typeof node !== "object" || node === null) {
+    console.log("fallthrough case: " + node);
     return node;
   }
 
   const { op, args } = node;
 
-  if (op === "SCALE") {
-    const [scale, innerNode] = args;
-    const innerExpanded = expandMacros(innerNode);
-    return {
-      op: "*",
-      args: [
-        scale,
-        {
-          op: innerExpanded.op,
-          args: innerExpanded.args.map((arg, index) =>
-            index === 0 ? { op: "/", args: [arg, scale] } : arg
-          ),
-        },
-      ],
-    };
+  console.log("processing OP: " + op);
+
+  if (op === "BOX") {
+    return (x) => `plainBox(${x}, ${args})`;
+  }
+
+  if (op === "NOOP") {
+    return expandMacros(args[1]);
   }
 
   if (op === "ROTATE") {
     const [angle, innerNode] = args;
     const innerExpanded = expandMacros(innerNode);
-    return {
-      op: innerExpanded.op,
-      args: innerExpanded.args.map((arg, index) =>
-        index === 0 ? { op: "*", args: [`${rotMatrix(angle)}`, arg] } : arg
-      ),
-    };
+    return (x) => innerExpanded(`(${rotMatrix(angle)} * ${x})`);
   }
 
-  if (op === "NOOP") {
-    return expandMacros(args[1]);
+  if (op === "SCALE") {
+    const [scale, innerNode] = args;
+    const innerExpanded = expandMacros(innerNode);
+    return (x) => `(${scale} * ${innerExpanded(`(${x}/${scale})`)})`;
+  }
+
+  if (op === "UNITE") {
+    const [innerNode1, innerNode2] = args;
+    const innerExpanded1 = expandMacros(innerNode1);
+    const innerExpanded2 = expandMacros(innerNode2);
+    return (x) => `min(${innerExpanded1(x)}, ${innerExpanded2(x)})`;
   }
 
   // Other operations here
@@ -163,18 +161,18 @@ const _scene_test = `
     rotatedBox(center, vec2(1.1, 0.4), vec4(0.1, 0.1, 0.1, 0.1), 20.0))
   `;
 
-  const background_color = `vec4(0.5, 0.5, 0.5, 0.0)`;
-  const interior_color = `vec4(0.5, 0.5, 0.5, 1.0)`;
-  const border_color = `vec4(0.0, 0.0, 0.0, 0.0)`;
-  
-  export const render = (scene) => shader({ height: 200, iMouse: true })`
+const background_color = `vec4(0.5, 0.5, 0.5, 0.0)`;
+const interior_color = `vec4(0.5, 0.5, 0.5, 1.0)`;
+const border_color = `vec4(0.0, 0.0, 0.0, 0.0)`;
+
+export const render = (scene) => shader({ height: 200, iMouse: true })`
   ${binops}
   ${atoms}
   void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     // coords  
     vec2 center = (2.0*fragCoord - iResolution.xy)/iResolution.y;
     // scene
-    float d = ${toGLSL(expandMacros(scene))};
+    float d = ${expandMacros(scene)};
     // colors
     vec4 background = ${background_color};
     vec4 interior = ${interior_color};
@@ -208,44 +206,115 @@ const _scene_test = `
 // console.log("\wWHOLE example:");
 // console.log(JSON.stringify(expandMacros(input), null, 2));
 
-// // Test the function with examples
-// const examples = [
-//   {
-//     op: "*",
-//     args: [
-//       "0.8",
-//       {
-//         op: "boxAtom",
-//         args: [
-//           { op: "/", args: ["center", "0.8"] },
-//           "vec2(0.9, 0.6)",
-//           "vec4(0.5, 0.3, 0.1, 0.2)",
-//         ],
-//       },
-//     ],
-//   },
-//   {
-//     op: "boxAtom",
-//     args: [
-//       {
-//         op: "*",
-//         args: [
-//           "${rotMatrix(45)}",
-//           "center"
-//         ]
-//       },
-//       "vec2(0.9, 0.6)",
-//       "vec4(0.5, 0.3, 0.1, 0.2)"
-//     ]
-//   },
-//   expandMacros(input)
-// ];
+// Test the function with examples
+export const examples = [
+  {
+    op: "BOX",
+    args: ["vec2(0.8, 0.9)"],
+  },
+  {
+    op: "NOOP",
+    args: [
+      "666",
+      {
+        op: "BOX",
+        args: ["vec2(0.8, 0.9)"],
+      },
+    ],
+  },
+  {
+    op: "ROTATE",
+    args: [
+      "20.0",
+      {
+        op: "BOX",
+        args: ["vec2(0.8, 0.9)"],
+      },
+    ],
+  },
+  {
+    op: "SCALE",
+    args: [
+      "0.5",
+      {
+        op: "BOX",
+        args: ["vec2(0.8, 0.9)"],
+      },
+    ],
+  },
+  {
+    op: "SCALE",
+    args: [
+      "0.5",
+      {
+        op: "ROTATE",
+        args: [
+          "20.0",
+          {
+            op: "BOX",
+            args: ["vec2(0.8, 0.9)"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    op: "ROTATE",
+    args: [
+      "20.0",
+      {
+        op: "NOOP",
+        args: [
+          "666",
+          {
+            op: "UNITE",
+            args: [
+              {
+                op: "BOX",
+                args: ["vec2(0.2, 2.0)"],
+              },
+              {
+                op: "BOX",
+                args: ["vec2(0.8, 0.9)"],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    op: "UNITE",
+    args: [
+      {
+        op: "ROTATE",
+        args: [
+          "20.0",
+          {
+            op: "BOX",
+            args: ["vec2(0.8, 0.9)"],
+          },
+        ],
+      },
+      {
+        op: "SCALE",
+        args: [
+          "0.5",
+          {
+            op: "BOX",
+            args: ["vec2(0.2, 2.0)"],
+          },
+        ],
+      },
+    ],
+  },
+];
 
-// examples.forEach((example, index) => {
-//   console.log(`Example ${index + 1}:`);
-//   console.log(to_string(example));
-//   console.log();
-// });
+examples.forEach((example, index) => {
+  console.log(`Example ${index + 1}:`);
+  console.log(expandMacros(example)("center"));
+  console.log();
+});
 
 // const rotated = (f) => `
 // float rotatedBox(in vec2 p, in vec2 b, in vec4 r, in float angle) {
