@@ -65,6 +65,11 @@ class Op {
     Op.all.push(this);
   }
 
+  getPrevOp() {
+    return Op.all.find((op) => {
+      return op.end === this.start;
+    });
+  }
   getNextOp() {
     return Op.all.find((op) => {
       return op.start === this.end;
@@ -118,27 +123,42 @@ class ScaleOp extends Op {
 class Value {
   op = null;
   time = null;
-  point = null;
-  constructor(op, time, point = null) {
+  p = null;
+
+  value = 0;
+  constructor(op, time, p = null) {
     this.op = op;
     this.time = time;
-    this.point = point;
+    this.p = p;
   }
 
-  go(t = 0.01) {
+  go(t = 0.005) {
     const newTime = this.time + t;
     if (newTime > 1) {
-      // get next op
+      // go to next op
+      const nextOp = this.op.getNextOp();
+      if (!nextOp) return false;
+      this.op = nextOp;
+      this.time = newTime - 1;
+      this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
     } else if (newTime < 0) {
-      // get prev op
+      // go to prev op
+      const prevOp = this.op.getPrevOp();
+      if (!prevOp) return false;
+      this.op = prevOp;
+      this.time = 1 + newTime;
+      this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
     } else {
-      this.point = lerp();
+      this.time = newTime;
+      this.p = lerp([this.op.start.p, this.op.end.p])(this.time);
     }
   }
 }
 
 let co = new CreateOp(new Handle(200, 200), new Handle(200, 100));
 let so = new ScaleOp(co.end, new Handle(300, 100));
+
+const myFirstValue = new Value(co, 0);
 // console.log(co.getNextOp());
 
 let dragging = null;
@@ -167,6 +187,9 @@ window.addEventListener("mouseup", (e) => {
 function tick() {
   ctx.clearRect(0, 0, c.width, c.height);
   Op.all.forEach((op) => op.draw());
+  myFirstValue.go();
+  console.log("myFirstValue", myFirstValue.p);
+  drawCircle(myFirstValue.p, 10);
   requestAnimationFrame(tick);
 }
 
