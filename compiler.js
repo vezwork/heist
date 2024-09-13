@@ -28,6 +28,12 @@ export const compile = (node) => {
     return compile(args[1]);
   }
 
+  if (op === "TRANSLATE") {
+    const [disp, innerNode] = args;
+    const innerExpanded = compile(innerNode);
+    return (x) => `(${innerExpanded(`${x}-${disp}`)})`;
+  }
+
   if (op === "ROTATE") {
     const [angle, innerNode] = args;
     const innerExpanded = compile(innerNode);
