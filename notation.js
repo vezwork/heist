@@ -31,7 +31,8 @@ const _BOX_ATOM = new ParticleAST(
 );
 
 const BOX_ATOM = new ParticleAST(
-  "coolS",
+  "ellipse",
+  "vec2(0.2, 0.5)"
 );
 
 let curScene = null;
@@ -238,6 +239,20 @@ class ScaleOp extends Op {
   }
 }
 
+class HollowOp extends Op {
+  name = "HOLLOW";
+  particleValue = (t) => lerpNum(0.1, this.length * 0.001, t);
+  draw() {
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "red";
+    drawLine([this.start.p, this.end.p]);
+    this.length = distance(this.start.p, this.end.p);
+    ctx.fillStyle = "red";
+    drawCircle(this.end.p, 5);
+    ctx.fill();
+  }
+}
+
 const lerpNum = (start, end, t) => (1 - t) * start + t * end;
 const mod = (a, n, nL = 0) =>
   ((((a - nL) % (n - nL)) + (n - nL)) % (n - nL)) + nL;
@@ -401,6 +416,9 @@ function applyTool(tool, p) {
   if (tool == "Scale") {
     return new ScaleOp(Handle.createOrFind(p[0], p[1]), new Handle(p[0], p[1]));
   }
+  if (tool == "Hollow") {
+    return new HollowOp(Handle.createOrFind(p[0], p[1]), new Handle(p[0], p[1]));
+  }
   if (tool == "Rotate") {
     return new RotateOp(
       Handle.createOrFind(p[0], p[1]),
@@ -455,6 +473,7 @@ const keyBindings = {
   c: "Create",
   s: "Scale",
   r: "Rotate",
+  h: "Hollow",
   u: "Union",
   l: "Line",
 };
