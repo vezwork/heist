@@ -24,14 +24,16 @@ class ParticleAST {
   }
 }
 
-const _BOX_ATOM = new ParticleAST(
-  "boxAtom",
-  "vec2(0.3, 0.3)",
-  "vec4(0., 0., 0., 0.)"
-);
+
+const intial_scale = 0.1;
 
 const BOX_ATOM = new ParticleAST(
-  "coolS",
+  "SCALE",
+  intial_scale,
+  new ParticleAST("coolS"),
+  new ParticleAST("star", "0.3", "3.0"),
+  
+  //new ParticleAST("boxAtom", "vec2(0.3, 0.3)", "vec4(0., 0., 0., 0.)")
 );
 
 let curScene = null;
@@ -378,7 +380,6 @@ class Particle {
   }
 
   draw() {
-    
     //console.log(this.value);
     // drawText(this.value, add(this.p, [0, 20]));
 
@@ -386,15 +387,15 @@ class Particle {
     curScene = render(this.value);
     console.log("myShader", curScene);
     //document.body.append(curScene);
-    
 
-    ctx.drawImage(curScene, ...add(this.p, [-40, -40]), 80, 80);
+    ctx.drawImage(curScene, ...add(this.p, [-600, -600]), 1200, 1200);
 
     // center point
     ctx.fillStyle = "white";
     ctx.strokeStyle = "white";
     drawCircle(this.p, 1);
     ctx.fill();
+    ctx.strokeStyle = "black";
   }
 }
 
@@ -423,7 +424,10 @@ function applyTool(tool, p) {
     return new ScaleOp(Handle.createOrFind(p[0], p[1]), new Handle(p[0], p[1]));
   }
   if (tool == "Hollow") {
-    return new HollowOp(Handle.createOrFind(p[0], p[1]), new Handle(p[0], p[1]));
+    return new HollowOp(
+      Handle.createOrFind(p[0], p[1]),
+      new Handle(p[0], p[1])
+    );
   }
   if (tool == "Rotate") {
     return new RotateOp(
