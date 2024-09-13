@@ -31,8 +31,7 @@ const _BOX_ATOM = new ParticleAST(
 );
 
 const BOX_ATOM = new ParticleAST(
-  "ellipse",
-  "vec2(0.2, 0.5)"
+  "coolS",
 );
 
 let curScene = null;
@@ -379,7 +378,7 @@ class Particle {
   }
 
   draw() {
-    drawCircle(this.p, 10);
+    
     //console.log(this.value);
     // drawText(this.value, add(this.p, [0, 20]));
 
@@ -387,8 +386,15 @@ class Particle {
     curScene = render(this.value);
     console.log("myShader", curScene);
     //document.body.append(curScene);
+    
 
     ctx.drawImage(curScene, ...add(this.p, [-40, -40]), 80, 80);
+
+    // center point
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "white";
+    drawCircle(this.p, 1);
+    ctx.fill();
   }
 }
 
