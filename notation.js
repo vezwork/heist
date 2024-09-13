@@ -30,7 +30,7 @@ const BOX_ATOM = new ParticleAST(
   "SCALE",
   intial_scale,
   new ParticleAST("coolS"),
-  new ParticleAST("star", "0.3", "3.0")
+  new ParticleAST("star", "0.3", "3.0"),
 
   //new ParticleAST("boxAtom", "vec2(0.3, 0.3)", "vec4(0., 0., 0., 0.)")
 );
@@ -78,7 +78,7 @@ function drawArc(a) {
     a.radius,
     a.startAngle,
     a.endAngle,
-    a.clockwise
+    a.clockwise,
   );
   ctx.stroke();
 }
@@ -236,7 +236,7 @@ class ScaleOp extends Op {
     const left = add(this.end.p, mul(scaleFactor, rotateQuarterXY(normalised)));
     const right = sub(
       this.end.p,
-      mul(scaleFactor, rotateQuarterXY(normalised))
+      mul(scaleFactor, rotateQuarterXY(normalised)),
     );
 
     drawLine([this.start.p, left]);
@@ -357,7 +357,7 @@ class Particle {
     this.value = new ParticleAST(
       this.op.name,
       this.op.particleValue(this.time),
-      BOX_ATOM
+      BOX_ATOM,
     );
     this.p = p;
     op.particles.push(this);
@@ -388,7 +388,7 @@ class Particle {
       this.value = new ParticleAST(
         this.op.name,
         this.op.particleValue(this.time),
-        this.value
+        this.value,
       );
     } else {
       if (this.op instanceof UnionOp) {
@@ -404,10 +404,10 @@ class Particle {
             new ParticleAST(
               "TRANSLATE",
               `vec2(${(x / c.width).toFixed(3)}, ${(-y / c.height).toFixed(
-                3
+                3,
               )})`,
-              particleToUnionWith.value
-            )
+              particleToUnionWith.value,
+            ),
           );
 
           particleToUnionWith.remove();
@@ -464,7 +464,7 @@ function applyTool(tool, p) {
   if (tool == "Create") {
     return new CreateOp(
       Handle.createOrFind(p[0], p[1]),
-      new Handle(p[0], p[1])
+      new Handle(p[0], p[1]),
     );
   }
   if (tool == "Scale") {
@@ -473,21 +473,21 @@ function applyTool(tool, p) {
   if (tool == "Hollow") {
     return new HollowOp(
       Handle.createOrFind(p[0], p[1]),
-      new Handle(p[0], p[1])
+      new Handle(p[0], p[1]),
     );
   }
   if (tool == "Rotate") {
     return new RotateOp(
       Handle.createOrFind(p[0], p[1]),
       new Handle(p[0] + 50, p[1] + 50),
-      new Handle(p[0], p[1])
+      new Handle(p[0], p[1]),
     );
   }
   if (tool == "Union") {
     return new UnionOp(
       Handle.createOrFind(p[0], p[1]),
       new Handle(p[0], p[1]),
-      new Handle(p[0], p[1])
+      new Handle(p[0], p[1]),
     );
   }
   if (tool == "Line") {
@@ -562,6 +562,7 @@ function tick() {
   let tx = 10;
   let ty = window.innerHeight - keys.length * 20;
 
+  ctx.fillStyle = "black";
   for (const [key, op] of keys) {
     ctx.fillText(`${key}: ${op}`, tx, 10 + ty);
     ty += 20;
