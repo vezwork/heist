@@ -9,6 +9,7 @@ import {
   rotateAround,
   rotate,
 } from "./vec.js";
+import { compile } from "./compiler.js";
 import { render } from "./render.js";
 
 // value AST data structure
@@ -26,14 +27,14 @@ class ParticleAST {
 
 const intial_scale = 0.1;
 
-const BOX_ATOM = new ParticleAST(
-  "SCALE",
-  intial_scale,
-  new ParticleAST("coolS"),
-  new ParticleAST("star", "0.3", "3.0"),
+const BOX_ATOM =
+  // new ParticleAST(
+  //   "SCALE",
+  //   0.1,
+  new ParticleAST("star", ".07", "0.3");
+// );
 
-  //new ParticleAST("boxAtom", "vec2(0.3, 0.3)", "vec4(0., 0., 0., 0.)")
-);
+//new ParticleAST("boxAtom", "vec2(0.3, 0.3)", "vec4(0., 0., 0., 0.)")
 
 let curScene = null;
 
@@ -78,7 +79,7 @@ function drawArc(a) {
     a.radius,
     a.startAngle,
     a.endAngle,
-    a.clockwise,
+    a.clockwise
   );
   ctx.stroke();
 }
@@ -236,7 +237,7 @@ class ScaleOp extends Op {
     const left = add(this.end.p, mul(scaleFactor, rotateQuarterXY(normalised)));
     const right = sub(
       this.end.p,
-      mul(scaleFactor, rotateQuarterXY(normalised)),
+      mul(scaleFactor, rotateQuarterXY(normalised))
     );
 
     drawLine([this.start.p, left]);
@@ -357,7 +358,7 @@ class Particle {
     this.value = new ParticleAST(
       this.op.name,
       this.op.particleValue(this.time),
-      BOX_ATOM,
+      BOX_ATOM
     );
     this.p = p;
     op.particles.push(this);
@@ -388,7 +389,7 @@ class Particle {
       this.value = new ParticleAST(
         this.op.name,
         this.op.particleValue(this.time),
-        this.value,
+        this.value
       );
     } else {
       if (this.op instanceof UnionOp) {
@@ -403,12 +404,11 @@ class Particle {
             this.value,
             new ParticleAST(
               "TRANSLATE",
-              `vec2(${(x / c.width).toFixed(3)}, ${(-y / c.height).toFixed(
-                3,
-              )})`,
-              particleToUnionWith.value,
-            ),
+              `vec2(${(x / 600).toFixed(3)}, ${-(y / 600).toFixed(3)})`,
+              particleToUnionWith.value
+            )
           );
+          console.log("UNITE!", compile(this.value)("center"));
 
           particleToUnionWith.remove();
         }
@@ -447,11 +447,11 @@ class Particle {
 
 let oa = new CreateOp(new Handle(200, 200), new Handle(200, 100));
 let ob = new ScaleOp(oa.end, new Handle(300, 100));
-let oc = new NoOp(ob.end, new Handle(350, 300));
-let od = new RotateOp(oc.end, new Handle(500, 101), new Handle(500, 200));
-let oe = new CreateOp(new Handle(600, 300), new Handle(600, 120));
+// let oc = new NoOp(ob.end, new Handle(350, 300));
+// let od = new RotateOp(oc.end, new Handle(500, 101), new Handle(500, 200));
+let oe = new ScaleOp(new Handle(600, 200), new Handle(600, 120));
 
-let of = new UnionOp(od.end, new Handle(700, 100), oe.end);
+let of = new UnionOp(ob.end, new Handle(700, 100), oe.end);
 
 const myFirstValue = new Particle(oa, 0);
 const mySecondValue = new Particle(oe, 0);
@@ -464,7 +464,7 @@ function applyTool(tool, p) {
   if (tool == "Create") {
     return new CreateOp(
       Handle.createOrFind(p[0], p[1]),
-      new Handle(p[0], p[1]),
+      new Handle(p[0], p[1])
     );
   }
   if (tool == "Scale") {
@@ -473,21 +473,21 @@ function applyTool(tool, p) {
   if (tool == "Hollow") {
     return new HollowOp(
       Handle.createOrFind(p[0], p[1]),
-      new Handle(p[0], p[1]),
+      new Handle(p[0], p[1])
     );
   }
   if (tool == "Rotate") {
     return new RotateOp(
       Handle.createOrFind(p[0], p[1]),
       new Handle(p[0] + 50, p[1] + 50),
-      new Handle(p[0], p[1]),
+      new Handle(p[0], p[1])
     );
   }
   if (tool == "Union") {
     return new UnionOp(
       Handle.createOrFind(p[0], p[1]),
       new Handle(p[0], p[1]),
-      new Handle(p[0], p[1]),
+      new Handle(p[0], p[1])
     );
   }
   if (tool == "Line") {

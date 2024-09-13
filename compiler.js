@@ -31,7 +31,7 @@ export const compile = (node) => {
   if (op === "TRANSLATE") {
     const [disp, innerNode] = args;
     const innerExpanded = compile(innerNode);
-    return (x) => `(${innerExpanded(`${x}-${disp}`)})`;
+    return (x) => `(${innerExpanded(`(${x}-${disp})`)})`;
   }
 
   if (op === "ROTATE") {
@@ -45,7 +45,7 @@ export const compile = (node) => {
     const [scale, innerNode] = args;
     const innerExpanded = compile(innerNode);
     const scalef = Number(scale).toFixed(3);
-    return (x) => `(${scalef} * ${innerExpanded(`(${x}/${scalef})`)})`;
+    return (x) => `(${scalef} * ${innerExpanded(`((${x})/${scalef})`)})`;
   }
 
   if (op === "HOLLOW") {
