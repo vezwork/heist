@@ -34,7 +34,7 @@ export function shader({
     preserveDrawingBuffer,
     alpha: true,
   });
-  canvas.style = `max-width: 100%; width: ${width}px; height: auto;`;
+  // canvas.style = `max-width: 100%; width: ${width}px; height: auto;`;
 
   const vertexShader = createShader(
     gl,

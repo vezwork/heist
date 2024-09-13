@@ -26,9 +26,8 @@ class ParticleAST {
 
 const BOX_ATOM = new ParticleAST(
   "boxAtom",
-  // "center",
-  "vec2(0.9, 0.6)",
-  "vec4(0.5, 0.3, 0.1, 0.2)"
+  "vec2(0.3, 0.3)",
+  "vec4(0., 0., 0., 0.)"
 );
 
 let curScene = null;
@@ -241,7 +240,7 @@ const mod = (a, n, nL = 0) =>
 
 class RotateOp extends Op {
   name = "ROTATE";
-  particleValue = (t) => -(this._particleAngle(t) - this._particleAngle(0));
+  particleValue = (t) => -this._particleAngle(t);
 
   _particleAngle = (t) => {
     const { clockwise, startAngle, endAngle } = this.arc;
@@ -367,9 +366,10 @@ class Particle {
 
     //curScene.remove();
     curScene = render(this.value);
+    console.log("myShader", curScene);
     //document.body.append(curScene);
 
-    ctx.drawImage(curScene, ...add(this.p, [-40, -15]), 80, 30);
+    ctx.drawImage(curScene, ...add(this.p, [-40, -40]), 80, 80);
   }
 }
 
