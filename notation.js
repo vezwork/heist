@@ -241,7 +241,7 @@ const mod = (a, n, nL = 0) =>
 
 class RotateOp extends Op {
   name = "ROTATE";
-  particleValue = (t) => this._particleAngle(t);
+  particleValue = (t) => -(this._particleAngle(t) - this._particleAngle(0));
 
   _particleAngle = (t) => {
     const { clockwise, startAngle, endAngle } = this.arc;
