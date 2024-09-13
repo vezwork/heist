@@ -9,7 +9,7 @@ import {
   rotateAround,
   rotate,
 } from "./vec.js";
-import { render, examples, expandMacros } from "./render.js";
+import { render } from "./render.js";
 
 // value AST data structure
 class ParticleAST {
@@ -24,10 +24,14 @@ class ParticleAST {
   }
 }
 
-const BOX_ATOM = new ParticleAST(
+const _BOX_ATOM = new ParticleAST(
   "boxAtom",
   "vec2(0.3, 0.3)",
   "vec4(0., 0., 0., 0.)"
+);
+
+const BOX_ATOM = new ParticleAST(
+  "coolS",
 );
 
 let curScene = null;
@@ -463,7 +467,7 @@ window.addEventListener("keydown", (e) => {
 });
 
 //testing for renderer:
-//document.body.append(render(expandMacros(examples[5])("center")));
+//document.body.append(render(compile(examples[5])("center")));
 
 function tick() {
   ctx.clearRect(0, 0, c.width, c.height);
