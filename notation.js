@@ -24,15 +24,14 @@ class ParticleAST {
   }
 }
 
-
 const intial_scale = 0.1;
 
 const BOX_ATOM = new ParticleAST(
   "SCALE",
   intial_scale,
   new ParticleAST("coolS"),
-  new ParticleAST("star", "0.3", "3.0"),
-  
+  new ParticleAST("star", "0.3", "3.0")
+
   //new ParticleAST("boxAtom", "vec2(0.3, 0.3)", "vec4(0., 0., 0., 0.)")
 );
 
@@ -157,6 +156,14 @@ class Handle {
     return Handle.getNear(this.p, this);
   }
 
+  getMyOps() {
+    const ops = [];
+    for (const op of Op.all) {
+      if (op.start === this || op.end === this) ops.push(op);
+    }
+    return ops;
+  }
+
   static getNear(pos, ignore = null) {
     for (const h of Handle.all) {
       if (h != ignore && h.distanceTo(pos) < 5) {
@@ -174,6 +181,7 @@ class Handle {
 
 class Op {
   static all = [];
+  particles = [];
   particleValue = (t) => lerpNum(0, 0, t);
   particlePos = (t) => lerp([this.start.p, this.end.p])(t);
   constructor(start, end) {
@@ -189,7 +197,7 @@ class Op {
   }
   getNextOp() {
     return Op.all.find((op) => {
-      return op.start.p === this.end.p;
+      return op.start === this.end;
     });
   }
 }
@@ -260,7 +268,7 @@ const mod = (a, n, nL = 0) =>
 
 class RotateOp extends Op {
   name = "ROTATE";
-  particleValue = (t) => -this._particleAngle(t);
+  particleValue = (t) => -this._particleAngle(t) + this._particleAngle(0);
 
   _particleAngle = (t) => {
     const { clockwise, startAngle, endAngle } = this.arc;
@@ -315,6 +323,11 @@ class UnionOp extends Op {
   constructor(start, end, insert) {
     super(start, end);
     this.insert = insert;
+    console.log("I have an insert!!!", insert, insert.getMyOps());
+  }
+
+  getInsertParticle() {
+    return this.insert.getMyOps()[0]?.particles[0];
   }
 
   draw() {
@@ -332,6 +345,7 @@ class UnionOp extends Op {
 }
 
 class Particle {
+  static all = [];
   op = null; // the edge instance its on
   time = null; // between 0 and 1
   p = null;
@@ -346,6 +360,8 @@ class Particle {
       BOX_ATOM
     );
     this.p = p;
+    op.particles.push(this);
+    Particle.all.push(this);
   }
 
   go(t = 1) {
@@ -362,7 +378,10 @@ class Particle {
       }
       this.value.args[0] = this.op.particleValue(1);
 
+      this.op.particles = this.op.particles.filter((p) => p !== this);
       this.op = nextOp;
+      this.op.particles.push(this);
+
       this.time = newTime - 1;
       this.p = this.op.particlePos(this.time);
 
@@ -372,11 +391,39 @@ class Particle {
         this.value
       );
     } else {
+      if (this.op instanceof UnionOp) {
+        const particleToUnionWith =
+          this.op.insert.getMyOps()?.[0]?.particles[0];
+
+        if (particleToUnionWith) {
+          const [x, y] = sub(particleToUnionWith.p, this.p);
+
+          this.value = new ParticleAST(
+            "UNITE",
+            this.value,
+            new ParticleAST(
+              "TRANSLATE",
+              `vec2(${(x / c.width).toFixed(3)}, ${(-y / c.height).toFixed(
+                3
+              )})`,
+              particleToUnionWith.value
+            )
+          );
+
+          particleToUnionWith.remove();
+        }
+      } else {
+        this.value.args[0] = this.op.particleValue(this.time);
+      }
+
       this.time = newTime;
       this.p = this.op.particlePos(this.time);
-
-      this.value.args[0] = this.op.particleValue(this.time);
     }
+  }
+
+  remove() {
+    this.op.particles = this.op.particles.filter((p) => p !== this);
+    Particle.all = Particle.all.filter((p) => p !== this);
   }
 
   draw() {
@@ -385,7 +432,6 @@ class Particle {
 
     //curScene.remove();
     curScene = render(this.value);
-    console.log("myShader", curScene);
     //document.body.append(curScene);
 
     ctx.drawImage(curScene, ...add(this.p, [-600, -600]), 1200, 1200);
@@ -405,9 +451,10 @@ let oc = new NoOp(ob.end, new Handle(350, 300));
 let od = new RotateOp(oc.end, new Handle(500, 101), new Handle(500, 200));
 let oe = new CreateOp(new Handle(600, 300), new Handle(600, 120));
 
-let of = new UnionOp(od.end, new Handle(700, 100), new Handle(600, 300));
+let of = new UnionOp(od.end, new Handle(700, 100), oe.end);
 
 const myFirstValue = new Particle(oa, 0);
+const mySecondValue = new Particle(oe, 0);
 // console.log(co.getNextOp());
 
 let dragging = null;
@@ -501,8 +548,14 @@ window.addEventListener("keydown", (e) => {
 function tick() {
   ctx.clearRect(0, 0, c.width, c.height);
   Op.all.forEach((op) => op.draw());
-  myFirstValue.go();
-  myFirstValue.draw();
+  Particle.all.forEach((particle) => {
+    particle.go();
+    particle.draw();
+  });
+
+  // mySecondValue.go();
+  // mySecondValue.draw();
+
   requestAnimationFrame(tick);
 
   let keys = Object.entries(keyBindings);

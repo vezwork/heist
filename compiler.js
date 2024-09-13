@@ -292,8 +292,43 @@ export const examples = [
       },
     ],
   },
+  {
+    op: "UNITE",
+    args: [
+      {
+        op: "NOOP",
+        args: [
+          0,
+          {
+            op: "ROTATE",
+            args: [
+              1.9655874464946588,
+              {
+                op: "NOOP",
+                args: [
+                  0,
+                  {
+                    op: "SCALE",
+                    args: [
+                      2,
+                      {
+                        op: "NOOP",
+                        args: [0, { op: "ellipse", args: ["vec2(0.2, 0.5)"] }],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      { op: "NOOP", args: [0, { op: "ellipse", args: ["vec2(0.2, 0.5)"] }] },
+    ],
+  },
 ];
 
+console.log(`there are ${examples.length} examples. Here you go:`);
 examples.forEach((example, index) => {
   console.log(`Example ${index + 1}:`);
   console.log(compile(example)("center"));
