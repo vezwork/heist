@@ -69,10 +69,12 @@ export const expandMacros = (node) => {
 
   const { op, args } = node;
 
-  // console.log("processing OP: " + op);
-
   if (op === "boxAtom") {
     return (x) => `boxAtom(${x}, ${args})`;
+  }
+
+  if (op === "plainBox") {
+    return (x) => `plainBox(${x}, ${args})`;
   }
 
   if (op === "NOOP") {
@@ -94,10 +96,35 @@ export const expandMacros = (node) => {
   }
 
   if (op === "UNITE") {
-    const [innerNode1, innerNode2] = args;
-    const innerExpanded1 = expandMacros(innerNode1);
-    const innerExpanded2 = expandMacros(innerNode2);
-    return (x) => `min(${innerExpanded1(x)}, ${innerExpanded2(x)})`;
+    const a = expandMacros(args[0]);
+    const b = expandMacros(args[1]);
+    return (x) => `min(${a(x)}, ${b(x)})`;
+  }
+
+  if (op === "SUBTRACT") {
+    const a = expandMacros(args[0]);
+    const b = expandMacros(args[1]);
+    return (x) => `max(-${a(x)}, ${b(x)})`;
+  }
+
+  if (op === "INTERSECT") {
+    const a = expandMacros(args[0]);
+    const b = expandMacros(args[1]);
+    return (x) => `max(${a(x)}, ${b(x)})`;
+  }
+
+  if (op === "SMUNITE") {
+    const a = expandMacros(args[0]);
+    const b = expandMacros(args[1]);
+    const k = expandMacros(args[2]);
+    return (x) => `min(${a(x)}, ${b(x)}) - max(${k(x)}-abs(${a(x)}-${b(x)}),0.0) * max(${k(x)}-abs(${a(x)}-${b(x)}),0.0)*0.25/${k(x)}`;
+  }
+
+  if (op === "SMUTRACT") {
+    const a = expandMacros(args[0]);
+    const b = expandMacros(args[1]);
+    const k = expandMacros(args[2]);
+    return (x) => `-min(${a(x)}, -${b(x)}) - max(${k(x)}-abs(${a(x)}+${b(x)}),0.0) * max(${k(x)}-abs(${a(x)}+${b(x)}),0.0)*0.25/${k(x)}`;
   }
 
   // Other operations here
