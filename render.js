@@ -198,7 +198,7 @@ const background_color = `vec4(0.5, 0.5, 0.5, 0.0)`;
 const interior_color = `vec4(0.5, 0.5, 0.5, 1.0)`;
 const border_color = `vec4(0.0, 0.0, 0.0, 0.0)`;
 
-const myShader = shader({ height: 200, iMouse: true });
+const myShader = shader({ height: 800, width: 800, iMouse: true });
 
 export const render = (scene) => {
   // console.log("SCENE:");
