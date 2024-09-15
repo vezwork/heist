@@ -263,6 +263,48 @@ class HollowOp extends Op {
   }
 }
 
+class MeltOp extends Op {
+  name = "MELT";
+  particleValue = (t) => lerpNum(0.1, this.length * 0.001, t);
+  draw() {
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "red";
+    drawLine([this.start.p, this.end.p]);
+    this.length = distance(this.start.p, this.end.p);
+    ctx.fillStyle = "red";
+    drawCircle(this.end.p, 5);
+    ctx.fill();
+  }
+}
+
+class BendOp extends Op {
+  name = "BEND";
+  particleValue = (t) => lerpNum(0.1, this.length * 0.001, t);
+  draw() {
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "red";
+    drawLine([this.start.p, this.end.p]);
+    this.length = distance(this.start.p, this.end.p);
+    ctx.fillStyle = "red";
+    drawCircle(this.end.p, 5);
+    ctx.fill();
+  }
+}
+
+class DisplaceOp extends Op {
+  name = "DISPLACE";
+  particleValue = (t) => lerpNum(0.1, this.length * 0.001, t);
+  draw() {
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "red";
+    drawLine([this.start.p, this.end.p]);
+    this.length = distance(this.start.p, this.end.p);
+    ctx.fillStyle = "red";
+    drawCircle(this.end.p, 5);
+    ctx.fill();
+  }
+}
+
 const lerpNum = (start, end, t) => (1 - t) * start + t * end;
 const mod = (a, n, nL = 0) =>
   ((((a - nL) % (n - nL)) + (n - nL)) % (n - nL)) + nL;
@@ -476,6 +518,24 @@ function applyTool(tool, p) {
       new Handle(p[0], p[1])
     );
   }
+  if (tool == "Bend") {
+    return new BendOp(
+      Handle.createOrFind(p[0], p[1]),
+      new Handle(p[0], p[1])
+    );
+  }
+  if (tool == "Melt") {
+    return new MeltOp(
+      Handle.createOrFind(p[0], p[1]),
+      new Handle(p[0], p[1])
+    );
+  }
+  if (tool == "Displace") {
+    return new DisplaceOp(
+      Handle.createOrFind(p[0], p[1]),
+      new Handle(p[0], p[1])
+    );
+  }
   if (tool == "Rotate") {
     return new RotateOp(
       Handle.createOrFind(p[0], p[1]),
@@ -530,9 +590,12 @@ const keyBindings = {
   c: "Create",
   s: "Scale",
   r: "Rotate",
-  h: "Hollow",
   u: "Union",
   l: "Line",
+  h: "Hollow",
+  b: "Bend",
+  m: "Melt",
+  d: "Displace"
 };
 
 window.addEventListener("keydown", (e) => {
