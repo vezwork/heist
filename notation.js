@@ -361,12 +361,13 @@ class NoOp extends Op {
   }
 }
 
+const UNION_OP_DROP_RADIUS = 50;
+
 class UnionOp extends Op {
   name = "NOOP";
   constructor(start, end, insert) {
     super(start, end);
     this.insert = insert;
-    console.log("I have an insert!!!", insert, insert.getMyOps());
   }
 
   getInsertParticle() {
@@ -376,8 +377,10 @@ class UnionOp extends Op {
   draw() {
     const mid = lerp([this.start.p, this.end.p])(0.5);
     ctx.fillStyle = "#00000011";
-    drawCircle(mid, 50);
+    drawCircle(mid, UNION_OP_DROP_RADIUS);
     ctx.fill();
+    ctx.fillStyle = "black";
+    drawCircle(mid, 2);
 
     drawLine([this.start.p, this.end.p]);
 
@@ -416,7 +419,8 @@ class Particle {
       if (!nextOp) {
         this.time = 1;
         this.p = this.op.particlePos(this.time);
-        this.value.args[0] = this.op.particleValue(1);
+        if (!(this.op instanceof UnionOp))
+          this.value.args[0] = this.op.particleValue(1);
         return false;
       }
       this.value.args[0] = this.op.particleValue(1);
@@ -434,7 +438,9 @@ class Particle {
         this.value
       );
     } else {
-      if (this.op instanceof UnionOp) {
+      const opLength = distance(this.op.start.p, this.op.end.p);
+      const dropZoneTimeBoundary = opLength / 2 / opLength;
+      if (this.op instanceof UnionOp && this.time > dropZoneTimeBoundary) {
         const particleToUnionWith =
           this.op.insert.getMyOps()?.[0]?.particles[0];
 
@@ -491,7 +497,7 @@ let oa = new CreateOp(new Handle(200, 200), new Handle(200, 100));
 let ob = new ScaleOp(oa.end, new Handle(300, 100));
 // let oc = new NoOp(ob.end, new Handle(350, 300));
 // let od = new RotateOp(oc.end, new Handle(500, 101), new Handle(500, 200));
-let oe = new ScaleOp(new Handle(600, 200), new Handle(600, 120));
+let oe = new ScaleOp(new Handle(500, 200), new Handle(500, 120));
 
 let of = new UnionOp(ob.end, new Handle(700, 100), oe.end);
 
