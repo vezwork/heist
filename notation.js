@@ -160,7 +160,7 @@ class Handle {
   getMyOps() {
     const ops = [];
     for (const op of Op.all) {
-      if (op.start === this || op.end === this) ops.push(op);
+      if (op.start.p === this.p || op.end.p === this.px) ops.push(op);
     }
     return ops;
   }
@@ -193,12 +193,12 @@ class Op {
 
   getPrevOp() {
     return Op.all.find((op) => {
-      return op.end === this.start;
+      return op.end.p === this.start.p;
     });
   }
   getNextOp() {
     return Op.all.find((op) => {
-      return op.start === this.end;
+      return op.start.p === this.end.p;
     });
   }
 }
