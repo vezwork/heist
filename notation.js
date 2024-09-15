@@ -265,7 +265,7 @@ class HollowOp extends Op {
 
 class MeltOp extends Op {
   name = "MELT";
-  particleValue = (t) => lerpNum(0.1, this.length * 0.001, t);
+  particleValue = (t) => lerpNum(1.0, this.length * 0.02, t);
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "red";
@@ -279,7 +279,7 @@ class MeltOp extends Op {
 
 class BendOp extends Op {
   name = "BEND";
-  particleValue = (t) => lerpNum(0.1, this.length * 0.001, t);
+  particleValue = (t) => lerpNum(0.0, this.length * 0.02, t);
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "red";
@@ -293,7 +293,7 @@ class BendOp extends Op {
 
 class DisplaceOp extends Op {
   name = "DISPLACE";
-  particleValue = (t) => lerpNum(0.1, this.length * 0.001, t);
+  particleValue = (t) => lerpNum(0.0, this.length * 0.02, t);
   draw() {
     ctx.fillStyle = "white";
     ctx.strokeStyle = "red";

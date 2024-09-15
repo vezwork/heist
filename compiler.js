@@ -58,26 +58,29 @@ export const compile = (node) => {
   if (op === "MELT") {
     const [radius, innerNode] = args;
     const innerExpanded = compile(innerNode);
-    const radiusf = Number(radius).toFixed(3);
-    return (x) => `(${innerExpanded(`(${x})`)} - ${radiusf})`;
+    const radiusf = Number(0.03*radius).toFixed(3);
+    //TODO: betterize this garbagio
+    const scalef = Number(0.4 - 0.05*radius).toFixed(3);
+    return (x) => `(${scalef} * (${innerExpanded(`(${x}/${scalef})`)} - ${radiusf}))`;
   }
 
   if (op === "BEND") {
     const [k, innerNode] = args;
     const innerExpanded = compile(innerNode);
-    const kf = Number(k).toFixed(3);
+    const kf = Number(36.1*k).toFixed(3);
     return (x) =>
       `(${innerExpanded(
-        `(mat2(cos(${kf}*${x}.x),-sin(${kf}*${x}.x),sin(${kf}*${x}.x),cos(${kf}*${x}.x))*${x})`
+        `(mat2(cos(${kf}*(${x}).x),-sin(${kf}*(${x}).x),sin(${kf}*(${x}).x),cos(${kf}*(${x}).x))*(${x}))`
       )})`;
   }
 
   if (op === "DISPLACE") {
     const [k, innerNode] = args;
     const innerExpanded = compile(innerNode);
-    const kf = Number(k).toFixed(3);
+    const kf = Number(1*k).toFixed(3);
+    const scalef = Number(1.0*kf).toFixed(3);
     return (x) =>
-      `(${innerExpanded(`(${x})`)}) + sin(${kf}*${x}.x)*sin(${kf}*${x}.y)`;
+      `(${scalef} * ${innerExpanded(`(${x}/${scalef})`)}) - sin(${kf}*(${x}/${scalef}).x)*sin(${kf}*(${x}/${scalef}).y)`;
   }
 
   if (op === "UNITE") {
