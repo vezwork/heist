@@ -377,11 +377,12 @@ class Particle {
       if (!nextOp) {
         this.time = 1;
         this.p = this.op.particlePos(this.time);
-        if (!(this.op instanceof UnionOp))
+        if (this.value.op !== "UNITE")
           this.value.args[0] = this.op.particleValue(1);
         return false;
       }
-      this.value.args[0] = this.op.particleValue(1);
+      if (this.value.op !== "UNITE")
+        this.value.args[0] = this.op.particleValue(1);
 
       this.op.particles = this.op.particles.filter((p) => p !== this);
       this.op = nextOp;
