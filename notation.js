@@ -160,7 +160,7 @@ class Handle {
   getMyOps() {
     const ops = [];
     for (const op of Op.all) {
-      if (op.start.p === this.p || op.end.p === this.px) ops.push(op);
+      if (op.start.p === this.p || op.end.p === this.p) ops.push(op);
     }
     return ops;
   }
@@ -440,7 +440,7 @@ class Particle {
       );
     } else {
       const opLength = distance(this.op.start.p, this.op.end.p);
-      const dropZoneTimeBoundary = opLength / 2 / opLength;
+      const dropZoneTimeBoundary = 0.5;
       if (this.op instanceof UnionOp && this.time > dropZoneTimeBoundary) {
         const particleToUnionWith =
           this.op.insert.getMyOps()?.[0]?.particles[0];
@@ -526,16 +526,10 @@ function applyTool(tool, p) {
     );
   }
   if (tool == "Bend") {
-    return new BendOp(
-      Handle.createOrFind(p[0], p[1]),
-      new Handle(p[0], p[1])
-    );
+    return new BendOp(Handle.createOrFind(p[0], p[1]), new Handle(p[0], p[1]));
   }
   if (tool == "Melt") {
-    return new MeltOp(
-      Handle.createOrFind(p[0], p[1]),
-      new Handle(p[0], p[1])
-    );
+    return new MeltOp(Handle.createOrFind(p[0], p[1]), new Handle(p[0], p[1]));
   }
   if (tool == "Displace") {
     return new DisplaceOp(
@@ -602,7 +596,7 @@ const keyBindings = {
   h: "Hollow",
   b: "Bend",
   m: "Melt",
-  d: "Displace"
+  d: "Displace",
 };
 
 window.addEventListener("keydown", (e) => {
