@@ -3,7 +3,7 @@ import { atoms } from "./atoms.js";
 import { compile } from "./compiler.js";
 
 const background_color = `vec4(0.5, 0.5, 0.5, 0.0)`;
-const interior_color = `vec4(0.5, 0.5, 0.5, 1.0)`;
+const interior_color = `vec4(0.9, 0.1, 0.4, 1.0)`;
 const border_color = `vec4(0.0, 0.0, 0.0, 0.0)`;
 
 const myShader = shader({ height: 1200, width: 1200, iMouse: true });

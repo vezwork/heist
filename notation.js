@@ -8,6 +8,8 @@ import {
   distance,
   rotateAround,
   rotate,
+  angleBetween,
+  setLength,
 } from "./vec.js";
 import { compile } from "./compiler.js";
 import { render } from "./render.js";
@@ -84,38 +86,48 @@ function drawArc(a) {
   ctx.stroke();
 }
 
+// intersect ref: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Using_homogeneous_coordinates
+const homoIntersect = ([a1, b1, c1], [a2, b2, c2]) => [
+  b1 * c2 - b2 * c1,
+  -(a2 * c1 - a1 * c2),
+  a1 * b2 - a2 * b1,
+];
+const cartesianFromHomo = ([a, b, c]) => [a / c, b / c];
+const homoFromPointAndVector = ([x, y], [dx, dy]) => [dy, dx, -dy * x + dx * y];
+//// https://www.mathsisfun.com/geometry/construct-circle3pts.html
 function arcFromThreePoints(p1, p2, p3) {
-  const [x1, y1] = p1;
-  const [x2, y2] = p2;
-  const [x3, y3] = p3;
-
   // Midpoints
-  const mid1 = [(x1 + x2) / 2, (y1 + y2) / 2];
-  const mid2 = [(x2 + x3) / 2, (y2 + y3) / 2];
+  const mid1 = lerp([p1, p2])(0.5);
+  const mid2 = lerp([p2, p3])(0.5);
 
-  // Slopes of the perpendicular bisectors
-  const slope1 = (x2 - x1) / (y1 - y2);
-  const slope2 = (x3 - x2) / (y2 - y3);
+  // perpendicular vectors
+  const perpV1 = rotateQuarterXY(sub(p2, p1));
+  const perpV2 = rotateQuarterXY(sub(p3, p2));
 
-  // Center of the circle
-  const centerX =
-    (mid2[1] - mid1[1] - (slope2 * mid2[0] - slope1 * mid1[0])) /
-    (slope1 - slope2);
-  const centerY = mid1[1] + slope1 * (centerX - mid1[0]);
+  //
+  const homo = homoIntersect(
+    homoFromPointAndVector(mid1, perpV1),
+    homoFromPointAndVector(mid2, perpV2)
+  );
+  const perpsAreParallel = homo[2] === 0;
+  const center = perpsAreParallel
+    ? add(p2, setLength(10000, perpV1)) // center is at infinity. approx with large magnitude.
+    : cartesianFromHomo(homo);
+  const [cx, cy] = center;
 
   // Radius of the circle
-  const radius = Math.sqrt((centerX - x1) ** 2 + (centerY - y1) ** 2);
+  const radius = distance(center, p1);
 
-  const startAngle = Math.atan2(p1[1] - centerY, p1[0] - centerX);
-  const middleAngle = Math.atan2(p2[1] - centerY, p2[0] - centerX);
-  const endAngle = Math.atan2(p3[1] - centerY, p3[0] - centerX);
+  const startAngle = angleBetween(center, p1);
+  const middleAngle = angleBetween(center, p2);
+  const endAngle = angleBetween(center, p3);
 
   const crossProduct =
     (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
   const clockwise = crossProduct < 0;
 
   return {
-    center: [centerX, centerY],
+    center: [cx, cy],
     radius,
     startAngle,
     middleAngle,
@@ -185,6 +197,7 @@ class Op {
   particles = [];
   particleValue = (t) => lerpNum(0, 0, t);
   particlePos = (t) => lerp([this.start.p, this.end.p])(t);
+  distance = () => distance(this.start.p, this.end.p);
   constructor(start, end) {
     this.start = start;
     this.end = end;
@@ -309,10 +322,39 @@ const lerpNum = (start, end, t) => (1 - t) * start + t * end;
 const mod = (a, n, nL = 0) =>
   ((((a - nL) % (n - nL)) + (n - nL)) % (n - nL)) + nL;
 
+// normalizes startAngle and endAngle such that subtracting them gives
+// the actual angle between them, respecting clockwiseness.
+const relativeAngles = (startAngle, endAngle, isClockwise) => {
+  startAngle = mod(startAngle, Math.PI * 2);
+  endAngle = mod(endAngle, Math.PI * 2);
+  if (isClockwise) {
+    if (startAngle <= endAngle) {
+      return [startAngle, endAngle];
+    } else {
+      return [startAngle, endAngle + Math.PI * 2];
+    }
+  } else {
+    if (startAngle >= endAngle) {
+      return [startAngle, endAngle];
+    } else {
+      return [startAngle, endAngle - Math.PI * 2];
+    }
+  }
+};
+
 class RotateOp extends Op {
   name = "ROTATE";
-  particleValue = (t) => -this._particleAngle(t) + this._particleAngle(0);
+  particleValue = (t) => -this._particleAngle(t) + this.arc.startAngle;
+  distance = () => {
+    const [s, e] = relativeAngles(
+      this.arc.startAngle,
+      this.arc.endAngle,
+      this.arc.clockwise
+    );
 
+    const arcAngle = Math.PI * 2 - Math.abs(e - s);
+    return arcAngle * this.arc.radius;
+  };
   _particleAngle = (t) => {
     const { clockwise, startAngle, endAngle } = this.arc;
 
@@ -411,7 +453,7 @@ class Particle {
   }
 
   go(t = 1) {
-    const len = distance(this.op.start.p, this.op.end.p);
+    const len = this.op.distance();
     const newTime = this.time + t / len;
     if (newTime > 1) {
       // go to next op
@@ -439,7 +481,6 @@ class Particle {
         this.value
       );
     } else {
-      const opLength = distance(this.op.start.p, this.op.end.p);
       const dropZoneTimeBoundary = 0.5;
       if (this.op instanceof UnionOp && this.time > dropZoneTimeBoundary) {
         const particleToUnionWith =
@@ -540,8 +581,8 @@ function applyTool(tool, p) {
   if (tool == "Rotate") {
     return new RotateOp(
       Handle.createOrFind(p[0], p[1]),
-      new Handle(p[0] + 50, p[1] + 50),
-      new Handle(p[0], p[1])
+      new Handle(p[0], p[1]),
+      new Handle(p[0] + 30, p[1] + 0)
     );
   }
   if (tool == "Union") {
