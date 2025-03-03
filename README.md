@@ -1,6 +1,6 @@
 # Heist
 
-<img width="635" alt="Screenshot 2024-09-11 at 10 04 36 PM" src="https://github.com/user-attachments/assets/c2fe8a04-7549-407e-848b-472da909241b">
+<img width="535" alt="Screenshot 2024-09-11 at 10 04 36 PM" src="https://github.com/user-attachments/assets/c2fe8a04-7549-407e-848b-472da909241b">
 
 Heist is a small scrappy experiment we made to explore some ideas in visual program editing, continuous computation, and constructing and rendering shapes using composable [2D SDF](https://iquilezles.org/articles/distfunctions2d/)s. We made it in a week at a retreat. Keep reading to hear more about the process and ideas that went into the project. [Click here to jump to how to run](#how-to-run).
 
@@ -34,9 +34,14 @@ The main ideas were:
 3. the parameters of the transformations (scale,rotate etc.) were controlled by the spatial layout of wires. The visual depiction of wires reflects the transformation they represent. _<span style="color: gray">–Marcel wanted to play around with visual analogies for computation.</span>_
 
 Here's a page where Andrew was figuring out how to compose and transform SDFs.
+
 <img width="340" alt="[Screenshot 2024-09-10 at 5 53 31 PM" src="https://github.com/user-attachments/assets/e5d5b48b-d345-487e-8266-5f09f6969bfe">
 
 Finally, here's a video showing a small node and wire program with debug text of the shape's SDF program through the program run.
+
+
+https://github.com/user-attachments/assets/7e0d9f2d-575e-4cfd-b52e-70d6bb9b67cc
+
 
 I feel satisfied with how we were all able to fit our exploration interests into a single project. I was in the "middle" of the implementation, in the sense that I worked on the continuous computation model and gluing the UI to the SDF evaluator. I was really happy that we were able to divide up the work along the lines of interest, communicate effectively about what we were making and what we needed from eachother, and then glue it all together in the end.
 
