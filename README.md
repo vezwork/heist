@@ -56,10 +56,19 @@ What I remember from heist is there was the idea of making a visual language, wh
 We made it so the parameters of the transformations (scale,rotate etc.) were basically controlled by the spatial layout. For example:
 
 - The arc represents a rotation, so the shape of the arc represents how much rotation happens.
+
+https://github.com/user-attachments/assets/c3dbd9b7-339b-4ba8-ab60-1febe7140b4c
+
 - The length of the scale operation determines the amount of scaling.
+  
+  ![image](https://github.com/user-attachments/assets/bce18b71-e11e-4dc3-8bfd-91c52a2b4b5a)
+
 - We then animate the transformations, so as the shape moves along the "rail", we're interpolating smoothly between the transformations
 - We spent a lot of time thinking about how boolean operations would work in this frame
   - Eventually, we settled on a discontinous "stamping" effect, where the shapes would wait on each other, and then "stamp" the result of the boolean operation onto a new shape.
+
+https://github.com/user-attachments/assets/bf5e9cda-46b4-45f2-aca4-d825431873f1
+
 - There was some discussion about having a more "functional" approach, v.s. the more "imperative" thing we ended up with. We chose the latter because it allowed for looping shapes around the canvas, which was a cool effect.
 - We also had some discussion about where the results should "go". i.e. do we feed the results into a "sink" that then could become a new primitive?
 
