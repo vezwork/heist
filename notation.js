@@ -14,6 +14,8 @@ import {
 import { compile } from "./compiler.js";
 import { render } from "./render.js";
 
+let DEBUG_FLAG = false;
+
 // value AST data structure
 class ParticleAST {
   op = "noop";
@@ -23,7 +25,9 @@ class ParticleAST {
     this.args = args;
   }
   toString() {
-    return `${this.op}(${this.args.join(",")})`;
+    return `${this.op}(${this.args
+      .map((n) => (!isNaN(n) ? Number(n).toFixed(2) : n))
+      .join(",")})`;
   }
 }
 
@@ -518,7 +522,15 @@ class Particle {
 
   draw() {
     //console.log(this.value);
-    // drawText(this.value, add(this.p, [0, 20]));
+    ctx.fillStyle = "black";
+    if (DEBUG_FLAG && Particle.all.indexOf(this) === 0) {
+      drawText("Particle 0 AST:", [20, 600]);
+      drawLine([
+        [20, 605],
+        [145, 605],
+      ]);
+      drawText(this.value, [20, 620]);
+    }
 
     //curScene.remove();
     curScene = render(this.value);
@@ -536,12 +548,12 @@ class Particle {
 }
 
 let oa = new CreateOp(new Handle(200, 200), new Handle(200, 100));
-let ob = new ScaleOp(oa.end, new Handle(300, 100));
+//let ob = new ScaleOp(oa.end, new Handle(300, 100));
 // let oc = new NoOp(ob.end, new Handle(350, 300));
 // let od = new RotateOp(oc.end, new Handle(500, 101), new Handle(500, 200));
-let oe = new ScaleOp(new Handle(500, 200), new Handle(500, 120));
+let oe = new CreateOp(new Handle(500, 200), new Handle(500, 120));
 
-let of = new UnionOp(ob.end, new Handle(700, 100), oe.end);
+let of = new UnionOp(new Handle(300, 100), new Handle(700, 100), oe.end);
 
 const myFirstValue = new Particle(oa, 0);
 const mySecondValue = new Particle(oe, 0);
@@ -644,6 +656,12 @@ window.addEventListener("keydown", (e) => {
   if (keyBindings[e.key]) {
     tool = keyBindings[e.key];
     console.log(tool);
+  }
+  if (e.key === " ") {
+    new Particle(oa, 0);
+  }
+  if (e.key === "?") {
+    DEBUG_FLAG = !DEBUG_FLAG;
   }
 });
 
