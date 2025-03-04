@@ -6,6 +6,8 @@ Heist is a small scrappy experiment we made to explore some ideas in visual prog
 
 _<span style="color: gray">This README was written by Elliot at the start of March 2025, 6 months after this project ended.</span>_
 
+https://github.com/user-attachments/assets/84cc5f5b-87ea-49d7-8169-1b075ac8c430
+
 ## Our Process
 
 [~~Ivan~~](https://ivanish.ca), [Marcel](https://mastodon.social/@wolkenmachine), [Andrew](https://andrewblinn.com/), and [I](https://elliot.website) went to [Gradient Retreat](https://www.gradientretreat.com/) last summer for a week. Ivan Reese put together our cohort, but unfortunately he got sick and was not able to come. We ended up working on this project (the name is a play on the name of Ivan's project, [Hest](https://ivanish.ca/hest/)).
